@@ -641,7 +641,6 @@ const styles = `
   color: var(--text-muted);
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  min-height: 10px;
   line-height: 1;
 }
 .team-card__cell--live {
