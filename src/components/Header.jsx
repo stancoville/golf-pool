@@ -1,15 +1,10 @@
 import React from 'react';
-import { parDisplay } from '../lib/scoring.js';
 
 /**
  * Tournament header — dark green panel with diagonal stripe texture,
- * gold pulsing status pill, big Playfair title, and a meta stats row.
+ * pulsing status pill, and big Playfair title.
  */
-export default function Header({ tournament, ranked }) {
-  const teamCount = ranked.length;
-  const leader = ranked[0];
-  const leaderPar = leader ? parDisplay(leader._par) : null;
-
+export default function Header({ tournament }) {
   return (
     <header className="masters-header">
       <div className="masters-header__inner">
@@ -25,29 +20,6 @@ export default function Header({ tournament, ranked }) {
         <p className="masters-header__subtitle">
           {tournament.venue} &middot; {tournament.year}
         </p>
-
-        <div className="masters-header__meta">
-          <div className="masters-header__stat">
-            <span className="masters-header__stat-label">Teams</span>
-            <span className="masters-header__stat-value">{teamCount}</span>
-          </div>
-          <div className="masters-header__stat">
-            <span className="masters-header__stat-label">Leader</span>
-            <span className="masters-header__stat-value">
-              {leader ? leader.teamName : '—'}
-            </span>
-          </div>
-          <div className="masters-header__stat">
-            <span className="masters-header__stat-label">Lead Score</span>
-            <span
-              className={`masters-header__stat-value masters-header__stat-value--${
-                leaderPar ? leaderPar.cls : 'even'
-              }`}
-            >
-              {leaderPar ? leaderPar.str : 'E'}
-            </span>
-          </div>
-        </div>
       </div>
     </header>
   );
