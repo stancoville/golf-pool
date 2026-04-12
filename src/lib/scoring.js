@@ -128,14 +128,17 @@ export function teamScore(team, players, coursePar = 72, currentRound = 4) {
 }
 
 /**
- * A single player's overall score relative to par. Prefers the ESPN-provided
- * `overallToPar` when available (it accounts for in-progress rounds
- * correctly). Falls back to computing from completed strokes + in-progress
- * par diff.
+ * A single player's overall score relative to par for this pool.
+ *
+ * For active players we prefer ESPN's `overallToPar` because it already
+ * accounts for in-progress rounds correctly. For cut/WD players we MUST
+ * compute it ourselves because the pool charges 80-stroke penalties for
+ * every missed round — ESPN's number only reflects the rounds they played.
  */
 export function playerParRelative(p, coursePar, currentRound = 4) {
   if (!p) return 0;
-  if (p.overallToPar != null) return p.overallToPar;
+  const isPenalized = p.status === 'cut' || p.status === 'wd';
+  if (!isPenalized && p.overallToPar != null) return p.overallToPar;
   const rounds = playerRounds(p, currentRound);
   const played = roundsPlayed(p, currentRound);
   const completedStrokes = rounds.reduce((a, v) => a + (v == null ? 0 : v), 0);

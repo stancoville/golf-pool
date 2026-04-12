@@ -391,10 +391,10 @@ const styles = `
   text-transform: uppercase;
 }
 
-/* Header (dark bg) — bright accent colors */
-.team-card__header .team-card__par--under { color: var(--accent); }
-.team-card__header .team-card__par--over  { color: #f3a59c; }
-.team-card__header .team-card__par--even  { color: rgba(245, 245, 240, 0.85); }
+/* Header (dark bg) — always accent yellow */
+.team-card__header .team-card__par--under,
+.team-card__header .team-card__par--over,
+.team-card__header .team-card__par--even  { color: var(--accent); }
 
 /* Card body (white bg) — under par = red, even/over = black */
 .team-card__col.team-card__par--under { color: var(--red);       font-weight: 500; }
