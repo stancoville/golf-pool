@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  bestPlayerIndices,
   isRoundInProgress,
   parDisplay,
   playerRounds,
@@ -28,6 +29,7 @@ function formatPlayerName(fullName) {
  */
 export default function TeamCard({ team, players, coursePar, currentRound }) {
   const teamPar = parDisplay(team._par);
+  const bestIndices = bestPlayerIndices(team, players, currentRound);
 
   return (
     <article className="team-card">
@@ -66,7 +68,7 @@ export default function TeamCard({ team, players, coursePar, currentRound }) {
           <div className="team-card__col team-card__col--par">PAR</div>
         </div>
 
-        {team.players.map((slug) => {
+        {team.players.map((slug, idx) => {
           const p = players[slug];
           if (!p) {
             return (
@@ -77,6 +79,7 @@ export default function TeamCard({ team, players, coursePar, currentRound }) {
               </div>
             );
           }
+          const counting = bestIndices.has(idx);
           return (
             <PlayerRow
               key={slug}
@@ -84,6 +87,7 @@ export default function TeamCard({ team, players, coursePar, currentRound }) {
               player={p}
               coursePar={coursePar}
               currentRound={currentRound}
+              counting={counting}
             />
           );
         })}
@@ -92,7 +96,7 @@ export default function TeamCard({ team, players, coursePar, currentRound }) {
   );
 }
 
-function PlayerRow({ slug, player, coursePar, currentRound }) {
+function PlayerRow({ slug, player, coursePar, currentRound, counting }) {
   const rounds = playerRounds(player, currentRound);
   const total = playerTotal(player, currentRound);
   const played = roundsPlayed(player, currentRound);
@@ -112,6 +116,7 @@ function PlayerRow({ slug, player, coursePar, currentRound }) {
   const rowClass = [
     'team-card__row',
     isPenalized ? 'team-card__row--penalized' : '',
+    !counting ? 'team-card__row--dropped' : '',
   ]
     .filter(Boolean)
     .join(' ');

@@ -1,11 +1,11 @@
 // Scoring helpers for The Masters Pool.
 //
-// A team is six players. The team's "score" is the sum of every player's
-// stroke total across the rounds that have been played. Players who miss the
-// cut or withdraw are charged a penalty of 80 strokes for each round they did
-// not actually complete — but only for rounds that are at or before the
-// tournament's current round, so missing-cut players don't get charged for
-// rounds the field hasn't played yet.
+// A team is six players. The team's "score" uses the **best four** of the
+// six players' stroke totals (drop the worst two). Players who miss the cut
+// or withdraw are charged a penalty of 80 strokes for each round they did
+// not actually complete — but only for rounds at or before the tournament's
+// current round, so missing-cut players don't get charged for rounds the
+// field hasn't played yet.
 //
 // The headline number on every card is the team's score relative to par,
 // which is also what we sort the leaderboard by. The tiebreaker is the
@@ -99,24 +99,45 @@ export function roundsPlayed(p, currentRound = 4) {
   );
 }
 
+// Number of best players counted toward the team score.
+const COUNT_BEST = 4;
+
 /**
- * Sum of every team member's playerTotal.
+ * Return the indices of the best COUNT_BEST players on a team, sorted by
+ * ascending playerTotal. Used by both teamScore and teamParRelative so
+ * they agree on which players count.
+ */
+export function bestPlayerIndices(team, players, currentRound = 4) {
+  const indexed = team.players.map((slug, i) => ({
+    i,
+    total: playerTotal(players[slug], currentRound),
+  }));
+  indexed.sort((a, b) => a.total - b.total);
+  return new Set(indexed.slice(0, COUNT_BEST).map((x) => x.i));
+}
+
+/**
+ * Sum of the best four players' playerTotal (best-4-of-6).
  */
 export function teamScore(team, players, currentRound = 4) {
-  return team.players.reduce((acc, slug) => {
-    const p = players[slug];
-    return acc + playerTotal(p, currentRound);
+  const best = bestPlayerIndices(team, players, currentRound);
+  return team.players.reduce((acc, slug, i) => {
+    if (!best.has(i)) return acc;
+    return acc + playerTotal(players[slug], currentRound);
   }, 0);
 }
 
 /**
- * The team's score relative to par. For each player we add their completed
- * stroke total minus their completed-round par baseline, then add the
- * in-progress current round's score-to-par directly.
+ * The team's score relative to par, counting only the best four players.
+ * For each counted player we add their completed stroke total minus their
+ * completed-round par baseline, then add the in-progress current round's
+ * score-to-par directly.
  */
 export function teamParRelative(team, players, coursePar, currentRound = 4) {
+  const best = bestPlayerIndices(team, players, currentRound);
   let diff = 0;
-  team.players.forEach((slug) => {
+  team.players.forEach((slug, i) => {
+    if (!best.has(i)) return;
     const p = players[slug];
     if (!p) return;
     const rounds = playerRounds(p, currentRound);

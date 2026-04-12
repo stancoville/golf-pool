@@ -1,14 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Header from './components/Header.jsx';
 import TeamCard from './components/TeamCard.jsx';
-import { COURSE_PAR } from './data/mockData.js';
 import { useLeaderboard } from './hooks/useLeaderboard.js';
+
+const COURSE_PAR = 72;
 
 const ROUND_TABS = [1, 2, 3, 4];
 
 export default function App() {
-  const { ranked, players, tournament, loading, lastSync, refresh } =
-    useLeaderboard();
+  const { ranked, players, tournament, lastSync } = useLeaderboard();
 
   const [query, setQuery] = useState('');
   const [activeRound, setActiveRound] = useState(tournament.currentRound);
@@ -74,16 +74,6 @@ export default function App() {
 
           <div className="toolbar__refresh">
             <span className="toolbar__sync">Updated {lastSyncStr}</span>
-            <button
-              type="button"
-              className={`refresh-btn ${loading ? 'refresh-btn--spinning' : ''}`}
-              onClick={refresh}
-              disabled={loading}
-              aria-label="Refresh leaderboard"
-            >
-              <RefreshIcon />
-              <span>Refresh</span>
-            </button>
           </div>
         </div>
 
@@ -107,7 +97,7 @@ export default function App() {
 
         <footer className="footer">
           <p>
-            Lowest total strokes wins. Cut &amp; WD players are charged 80
+            Best 4 of 6 players count. Cut &amp; WD players are charged 80
             strokes per missed round. Ties broken by closest tiebreaker guess to
             the winner&rsquo;s final score.
           </p>
@@ -134,27 +124,6 @@ function SearchIcon() {
     >
       <circle cx="11" cy="11" r="7" />
       <line x1="21" y1="21" x2="16.65" y2="16.65" />
-    </svg>
-  );
-}
-
-function RefreshIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <polyline points="23 4 23 10 17 10" />
-      <polyline points="1 20 1 14 7 14" />
-      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10" />
-      <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14" />
     </svg>
   );
 }
@@ -377,40 +346,6 @@ const styles = `
   text-transform: uppercase;
   color: var(--text-muted);
 }
-.refresh-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  border: 1px solid var(--green-mid);
-  border-radius: 8px;
-  background: var(--green-deep);
-  color: var(--white);
-  font-family: 'DM Mono', ui-monospace, monospace;
-  font-size: 12px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  transition: background-color 0.18s ease, transform 0.18s ease;
-}
-.refresh-btn:hover:not(:disabled) {
-  background: var(--green-mid);
-  transform: translateY(-1px);
-}
-.refresh-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-.refresh-btn svg {
-  transition: transform 0.6s ease;
-}
-.refresh-btn--spinning svg {
-  animation: refresh-spin 0.9s linear infinite;
-}
-@keyframes refresh-spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-
 /* ----- Grid + cards ----- */
 .leaderboard-grid {
   display: grid;
@@ -579,6 +514,9 @@ const styles = `
 }
 .team-card__row--penalized {
   color: var(--cut-gray);
+}
+.team-card__row--dropped {
+  opacity: 0.4;
 }
 .team-card__col {
   text-align: center;
