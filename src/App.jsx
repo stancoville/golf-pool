@@ -99,6 +99,7 @@ export default function App() {
                 team={team}
                 players={players}
                 coursePar={COURSE_PAR}
+                currentRound={tournament.currentRound}
               />
             ))}
           </div>
@@ -538,23 +539,35 @@ const styles = `
 .team-card__totals {
   flex: 0 0 auto;
   text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
 }
-.team-card__strokes {
+.team-card__par-big {
   font-family: 'DM Mono', ui-monospace, monospace;
-  font-size: 22px;
+  font-size: 28px;
   font-weight: 500;
-  color: var(--cream);
   line-height: 1;
+  letter-spacing: -0.01em;
 }
-.team-card__par {
+.team-card__strokes-small {
   font-family: 'DM Mono', ui-monospace, monospace;
-  font-size: 13px;
-  margin-top: 4px;
-  letter-spacing: 0.04em;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: rgba(250, 246, 238, 0.62);
+  text-transform: uppercase;
 }
-.team-card__par--under { color: var(--gold-light); }
-.team-card__par--over  { color: #f3a59c; }
-.team-card__par--even  { color: rgba(250, 246, 238, 0.78); }
+
+/* Header (dark bg) — bright accent colors */
+.team-card__header .team-card__par--under { color: var(--gold-light); }
+.team-card__header .team-card__par--over  { color: #f3a59c; }
+.team-card__header .team-card__par--even  { color: rgba(250, 246, 238, 0.85); }
+
+/* Card body (white bg) — readable colors */
+.team-card__col.team-card__par--under { color: var(--green-mid); font-weight: 500; }
+.team-card__col.team-card__par--over  { color: var(--red);       font-weight: 500; }
+.team-card__col.team-card__par--even  { color: var(--text-dark); }
 
 .team-card__tiebreaker {
   display: flex;
@@ -575,14 +588,14 @@ const styles = `
 }
 
 .team-card__table {
-  padding: 4px 6px 12px;
+  padding: 4px 4px 10px;
 }
 .team-card__row {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) 28px repeat(4, 1fr) 1fr 0.8fr;
+  grid-template-columns: minmax(0, 1.55fr) repeat(4, minmax(0, 0.85fr)) minmax(0, 0.8fr) minmax(0, 0.75fr);
   align-items: center;
-  gap: 4px;
-  padding: 8px 12px;
+  gap: 2px;
+  padding: 6px 10px;
   border-bottom: 1px solid rgba(26, 58, 42, 0.06);
   font-size: 14px;
 }
@@ -592,10 +605,12 @@ const styles = `
 .team-card__row--head {
   font-family: 'DM Mono', ui-monospace, monospace;
   font-size: 10px;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-muted);
   border-bottom: 1px solid var(--card-border);
+  padding-top: 8px;
+  padding-bottom: 6px;
 }
 .team-card__row--penalized {
   color: var(--cut-gray);
@@ -604,47 +619,88 @@ const styles = `
   text-align: center;
   font-family: 'DM Mono', ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
+  min-width: 0;
 }
 .team-card__col--player {
   text-align: left;
   font-family: 'EB Garamond', serif;
   font-size: 15px;
+  color: var(--text-dark);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.team-card__player-name {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: var(--text-dark);
+  min-width: 0;
 }
 .team-card__row--penalized .team-card__col--player {
   color: var(--cut-gray);
 }
-.team-card__strike {
+.team-card__strike .team-card__player-name {
   text-decoration: line-through;
   text-decoration-color: rgba(154, 171, 162, 0.7);
 }
 .team-card__col--total {
   font-weight: 500;
   color: var(--text-dark);
+  font-size: 13px;
 }
 .team-card__row--penalized .team-card__col--total {
   color: var(--cut-gray);
 }
 .team-card__col--par {
-  font-size: 12px;
+  font-size: 13px;
 }
-.team-card__cell--penalty {
+
+/* Round cells — two-line slot so live + finished rounds align cleanly. */
+.team-card__col--round {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.05;
+  padding: 2px 0;
+  border-radius: 4px;
+}
+.team-card__round-main {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.team-card__round-sub {
+  font-size: 9px;
+  margin-top: 2px;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  min-height: 11px;
+  line-height: 1;
+}
+.team-card__cell--live {
+  background: rgba(26, 58, 42, 0.05);
+}
+.team-card__cell--live .team-card__round-main {
+  font-weight: 500;
+}
+.team-card__cell--penalty .team-card__round-main {
   font-style: italic;
   color: var(--cut-gray);
 }
+
 .team-card__badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex: 0 0 auto;
   font-family: 'DM Mono', ui-monospace, monospace;
   font-size: 9px;
   font-weight: 500;
-  letter-spacing: 0.08em;
-  padding: 2px 5px;
-  border-radius: 4px;
+  letter-spacing: 0.06em;
+  padding: 1px 4px;
+  border-radius: 3px;
   text-transform: uppercase;
 }
 .team-card__badge--cut {
@@ -657,12 +713,11 @@ const styles = `
 }
 
 /* Highlight the column matching the active round tab */
-.app[data-active-round="1"] .team-card__row > .team-card__col--round:nth-of-type(1),
-.app[data-active-round="2"] .team-card__row > .team-card__col--round:nth-of-type(2),
-.app[data-active-round="3"] .team-card__row > .team-card__col--round:nth-of-type(3),
-.app[data-active-round="4"] .team-card__row > .team-card__col--round:nth-of-type(4) {
-  background: rgba(201, 168, 76, 0.12);
-  border-radius: 4px;
+.app[data-active-round="1"] .team-card__row > .team-card__col--round:nth-of-type(2),
+.app[data-active-round="2"] .team-card__row > .team-card__col--round:nth-of-type(3),
+.app[data-active-round="3"] .team-card__row > .team-card__col--round:nth-of-type(4),
+.app[data-active-round="4"] .team-card__row > .team-card__col--round:nth-of-type(5) {
+  background: rgba(201, 168, 76, 0.14);
 }
 
 /* ----- Footer ----- */

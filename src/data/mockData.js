@@ -11,171 +11,135 @@ export const TOURNAMENT = {
   status: 'In Progress',
 };
 
-// Players keyed by slug. r1..r4 are integer stroke totals or null if not yet played.
+// Players keyed by slug.
+//
+// r1..r4 are integer stroke totals for COMPLETED rounds, or null if the round
+// has not been completed yet (in progress, not yet teed off, cut, or WD).
+//
+// For the active round only, two extra fields describe live progress:
+//   thru:  number of holes played in the current round (0 = not yet teed off,
+//          1..17 = on the course, 18 / null once the round is final)
+//   toPar: that round's score relative to par (e.g. -2)
+//
 // status: 'active' | 'cut' | 'wd'
-// pos is the live ESPN-style position string (e.g. "1", "T4", "CUT").
+// pos:    live ESPN-style position string (e.g. "1", "T4", "CUT", "WD")
 export const PLAYERS = {
+  // ----- R3 complete -----
   'rory-mcilroy': {
     name: 'Rory McIlroy',
-    r1: 67,
-    r2: 65,
-    r3: null,
-    r4: null,
-    status: 'active',
-    pos: '1',
+    r1: 67, r2: 65, r3: 69, r4: null,
+    thru: null, toPar: null,
+    status: 'active', pos: '1',
   },
   'scottie-scheffler': {
     name: 'Scottie Scheffler',
-    r1: 68,
-    r2: 67,
-    r3: null,
-    r4: null,
-    status: 'active',
-    pos: '2',
-  },
-  'xander-schauffele': {
-    name: 'Xander Schauffele',
-    r1: 69,
-    r2: 67,
-    r3: null,
-    r4: null,
-    status: 'active',
-    pos: 'T3',
-  },
-  'ludvig-aberg': {
-    name: 'Ludvig Aberg',
-    r1: 68,
-    r2: 68,
-    r3: null,
-    r4: null,
-    status: 'active',
-    pos: 'T3',
-  },
-  'collin-morikawa': {
-    name: 'Collin Morikawa',
-    r1: 70,
-    r2: 67,
-    r3: null,
-    r4: null,
-    status: 'active',
-    pos: 'T5',
+    r1: 68, r2: 67, r3: 70, r4: null,
+    thru: null, toPar: null,
+    status: 'active', pos: 'T2',
   },
   'jon-rahm': {
     name: 'Jon Rahm',
-    r1: 69,
-    r2: 68,
-    r3: null,
-    r4: null,
-    status: 'active',
-    pos: 'T5',
+    r1: 69, r2: 68, r3: 70, r4: null,
+    thru: null, toPar: null,
+    status: 'active', pos: 'T3',
   },
-  'bryson-dechambeau': {
-    name: 'Bryson DeChambeau',
-    r1: 71,
-    r2: 67,
-    r3: null,
-    r4: null,
-    status: 'active',
-    pos: 'T7',
-  },
-  'tommy-fleetwood': {
-    name: 'Tommy Fleetwood',
-    r1: 70,
-    r2: 68,
-    r3: null,
-    r4: null,
-    status: 'active',
-    pos: 'T7',
-  },
-  'viktor-hovland': {
-    name: 'Viktor Hovland',
-    r1: 71,
-    r2: 68,
-    r3: null,
-    r4: null,
-    status: 'active',
-    pos: 'T9',
-  },
-  'patrick-cantlay': {
-    name: 'Patrick Cantlay',
-    r1: 70,
-    r2: 69,
-    r3: null,
-    r4: null,
-    status: 'active',
-    pos: 'T9',
+  'ludvig-aberg': {
+    name: 'Ludvig Aberg',
+    r1: 68, r2: 68, r3: 71, r4: null,
+    thru: null, toPar: null,
+    status: 'active', pos: 'T3',
   },
   'hideki-matsuyama': {
     name: 'Hideki Matsuyama',
-    r1: 72,
-    r2: 68,
-    r3: null,
-    r4: null,
-    status: 'active',
-    pos: 'T11',
+    r1: 72, r2: 68, r3: 70, r4: null,
+    thru: null, toPar: null,
+    status: 'active', pos: 'T6',
   },
-  'justin-thomas': {
-    name: 'Justin Thomas',
-    r1: 71,
-    r2: 69,
-    r3: null,
-    r4: null,
-    status: 'active',
-    pos: 'T11',
+  'viktor-hovland': {
+    name: 'Viktor Hovland',
+    r1: 71, r2: 68, r3: 71, r4: null,
+    thru: null, toPar: null,
+    status: 'active', pos: 'T6',
   },
-  'jordan-spieth': {
-    name: 'Jordan Spieth',
-    r1: 70,
-    r2: 71,
-    r3: null,
-    r4: null,
-    status: 'active',
-    pos: 'T13',
+  'patrick-cantlay': {
+    name: 'Patrick Cantlay',
+    r1: 70, r2: 69, r3: 72, r4: null,
+    thru: null, toPar: null,
+    status: 'active', pos: 'T9',
   },
   'shane-lowry': {
     name: 'Shane Lowry',
-    r1: 72,
-    r2: 70,
-    r3: null,
-    r4: null,
-    status: 'active',
-    pos: 'T14',
+    r1: 72, r2: 70, r3: 72, r4: null,
+    thru: null, toPar: null,
+    status: 'active', pos: 'T13',
   },
+  'jordan-spieth': {
+    name: 'Jordan Spieth',
+    r1: 70, r2: 71, r3: 73, r4: null,
+    thru: null, toPar: null,
+    status: 'active', pos: 'T15',
+  },
+
+  // ----- R3 in progress -----
+  'collin-morikawa': {
+    name: 'Collin Morikawa',
+    r1: 70, r2: 67, r3: null, r4: null,
+    thru: 9, toPar: -3,
+    status: 'active', pos: 'T5',
+  },
+  'xander-schauffele': {
+    name: 'Xander Schauffele',
+    r1: 69, r2: 67, r3: null, r4: null,
+    thru: 12, toPar: -1,
+    status: 'active', pos: 'T6',
+  },
+  'bryson-dechambeau': {
+    name: 'Bryson DeChambeau',
+    r1: 71, r2: 67, r3: null, r4: null,
+    thru: 11, toPar: -2,
+    status: 'active', pos: 'T8',
+  },
+  'tommy-fleetwood': {
+    name: 'Tommy Fleetwood',
+    r1: 70, r2: 68, r3: null, r4: null,
+    thru: 14, toPar: 0,
+    status: 'active', pos: 'T9',
+  },
+  'justin-thomas': {
+    name: 'Justin Thomas',
+    r1: 71, r2: 69, r3: null, r4: null,
+    thru: 8, toPar: 1,
+    status: 'active', pos: 'T13',
+  },
+
+  // ----- R3 not yet teed off -----
   'sahith-theegala': {
     name: 'Sahith Theegala',
-    r1: 73,
-    r2: 70,
-    r3: null,
-    r4: null,
-    status: 'active',
-    pos: 'T15',
+    r1: 73, r2: 70, r3: null, r4: null,
+    thru: 0, toPar: 0,
+    status: 'active', pos: 'T18',
   },
+
+  // ----- Missed cut -----
   'will-zalatoris': {
     name: 'Will Zalatoris',
-    r1: 74,
-    r2: 75,
-    r3: null,
-    r4: null,
-    status: 'cut',
-    pos: 'CUT',
+    r1: 74, r2: 75, r3: null, r4: null,
+    thru: null, toPar: null,
+    status: 'cut', pos: 'CUT',
   },
   'jason-day': {
     name: 'Jason Day',
-    r1: 75,
-    r2: 76,
-    r3: null,
-    r4: null,
-    status: 'cut',
-    pos: 'CUT',
+    r1: 75, r2: 76, r3: null, r4: null,
+    thru: null, toPar: null,
+    status: 'cut', pos: 'CUT',
   },
+
+  // ----- Withdrew -----
   'sergio-garcia': {
     name: 'Sergio Garcia',
-    r1: 78,
-    r2: null,
-    r3: null,
-    r4: null,
-    status: 'wd',
-    pos: 'WD',
+    r1: 78, r2: null, r3: null, r4: null,
+    thru: null, toPar: null,
+    status: 'wd', pos: 'WD',
   },
 };
 
