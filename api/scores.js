@@ -11,15 +11,47 @@ function slugify(name) {
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
+    // Handle Nordic characters that NFD doesn't decompose
+    .replace(/ø/g, 'o')
+    .replace(/æ/g, 'ae')
+    .replace(/ð/g, 'd')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '');
 }
+
+// Known name differences between ESPN and common pool spreadsheets.
+// Maps ESPN slug → additional alias slugs so the frontend can match either.
+const ESPN_ALIASES = {
+  'alex-noren': ['alexander-noren'],
+  'haotong-li': ['hao-tong-li'],
+  'johnny-keefer': ['john-keefer'],
+  'matt-mccarty': ['matthew-mccarty'],
+  'nico-echavarria': ['nicolas-echavarria'],
+  'angel-cabrera': ['angel-cabrera'],
+};
 
 /** Parse a toPar displayValue like "-2", "E", "+3" into a number. */
 function parseToPar(str) {
   if (!str || str === '-') return null;
   if (str === 'E') return 0;
   return parseInt(str, 10);
+}
+
+/**
+ * Extract the time portion from an ESPN tee time string like
+ * "Sun Apr 12 14:25:00 PDT 2026". Returns "2:25 PM" without
+ * any timezone conversion — the time is already in tournament-local.
+ */
+function formatTeeTime(raw) {
+  if (!raw) return null;
+  const m = raw.match(/(\d{1,2}):(\d{2}):\d{2}\s/);
+  if (!m) return null;
+  let h = parseInt(m[1], 10);
+  const min = m[2];
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  if (h > 12) h -= 12;
+  if (h === 0) h = 12;
+  return `${h}:${min} ${ampm}`;
 }
 
 export default async function handler(req, res) {
@@ -51,11 +83,9 @@ export default async function handler(req, res) {
     if (statusState === 'post') tournamentStatus = 'Complete';
     else if (statusState === 'in') tournamentStatus = 'In Progress';
 
-    // Determine current round from the data: find the highest round with any
-    // activity (hole-by-hole data or non-dash displayValue).
-    let currentRound = 3; // default
+    // Determine current round: find the highest round with any real activity
     const competitors = competition.competitors || [];
-
+    let currentRound = 1;
     for (const c of competitors) {
       const ls = c.linescores || [];
       for (let r = ls.length - 1; r >= 0; r--) {
@@ -64,8 +94,7 @@ export default async function handler(req, res) {
           currentRound = Math.max(currentRound, r + 1);
           break;
         }
-        const holes = period.linescores || [];
-        if (holes.length > 0) {
+        if ((period.linescores || []).length > 0) {
           currentRound = Math.max(currentRound, r + 1);
           break;
         }
@@ -73,16 +102,12 @@ export default async function handler(req, res) {
       if (currentRound === 4) break;
     }
 
-    // Compute positions from sort order. ESPN returns competitors sorted by
-    // score. Players sharing the same score are tied.
-    const scoreToPos = new Map();
+    // Compute positions from sort order
     const scoreCounts = new Map();
     competitors.forEach((c, i) => {
-      const scoreVal = typeof c.score === 'object' ? c.score?.displayValue : String(c.score ?? '');
-      if (!scoreCounts.has(scoreVal)) {
-        scoreCounts.set(scoreVal, { first: i + 1, count: 0 });
-      }
-      scoreCounts.get(scoreVal).count++;
+      const sv = typeof c.score === 'object' ? c.score?.displayValue : String(c.score ?? '');
+      if (!scoreCounts.has(sv)) scoreCounts.set(sv, { first: i + 1, count: 0 });
+      scoreCounts.get(sv).count++;
     });
 
     // Parse each competitor
@@ -94,78 +119,81 @@ export default async function handler(req, res) {
       const slug = slugify(name);
       const ls = c.linescores || [];
 
-      // Round scores — only count a round as complete if displayValue !== '-'
+      // Parse completed rounds and detect cut status
       const rounds = [null, null, null, null];
-      const teeTime = [null, null, null, null]; // tee times per round
+      const teeTimes = [null, null, null, null];
+      let lastCompletedRound = 0;
+
       for (let r = 0; r < 4; r++) {
         if (r >= ls.length) continue;
         const period = ls[r];
         const disp = period.displayValue || '-';
         const val = period.value ?? 0;
 
-        // Extract tee time from statistics
+        // Extract tee time from the last stat in the period's statistics
         const stats = period.statistics?.categories?.[0]?.stats;
         if (stats && stats.length > 0) {
-          const lastStat = stats[stats.length - 1]?.displayValue || '';
-          if (lastStat.includes('Apr') || lastStat.includes('20')) {
-            teeTime[r] = lastStat;
+          const raw = stats[stats.length - 1]?.displayValue || '';
+          if (raw.includes('Apr') || raw.includes('20')) {
+            teeTimes[r] = formatTeeTime(raw);
           }
         }
 
-        if (disp === '-' || (val === 0 && !period.linescores?.length)) {
+        if (disp === '-' || (val === 0 && !(period.linescores || []).length)) {
           // Round not started or no data
           rounds[r] = null;
         } else if (val >= 55) {
           // Completed round (full 18-hole score)
           rounds[r] = Math.round(val);
+          lastCompletedRound = r + 1;
         } else {
-          // In-progress round — val is partial stroke count, not a completed round
+          // In-progress round — partial strokes, not a completed score
           rounds[r] = null;
+          // Still counts as activity for this round
+          if (lastCompletedRound < r + 1) lastCompletedRound = r;
         }
+      }
+
+      // Detect cut: if the tournament is past round 2 and the player only has
+      // R1 + R2 completed with no R3 data, they missed the cut.
+      let status = 'active';
+      if (currentRound >= 3 && lastCompletedRound === 2 && rounds[2] === null) {
+        status = 'cut';
       }
 
       // In-progress round detection
       let thru = null;
       let toPar = null;
       const crIdx = currentRound - 1;
-      if (crIdx < ls.length) {
+      if (status === 'active' && crIdx < ls.length) {
         const crPeriod = ls[crIdx];
         const crDisp = crPeriod.displayValue || '-';
         const crHoles = crPeriod.linescores || [];
-
         if (crDisp !== '-' && crHoles.length > 0 && crHoles.length < 18) {
-          // Player is on the course
           thru = crHoles.length;
           toPar = parseToPar(crDisp);
-        } else if (crDisp !== '-' && crHoles.length === 18) {
-          // Round completed but tournament round might still be "current"
-          // Score is already in rounds[crIdx]
         }
       }
 
-      // Overall score (to par) — ESPN provides this directly
+      // Overall score to par from ESPN
       const overallToPar = parseToPar(
         typeof c.score === 'object' ? c.score?.displayValue : String(c.score ?? '')
       );
 
-      // Position: derive from sort order
-      const scoreVal = typeof c.score === 'object' ? c.score?.displayValue : String(c.score ?? '');
-      const posInfo = scoreCounts.get(scoreVal);
-      let pos = String(idx + 1);
+      // Position from sort order
+      const sv = typeof c.score === 'object' ? c.score?.displayValue : String(c.score ?? '');
+      const posInfo = scoreCounts.get(sv);
+      let pos = '';
       if (posInfo) {
         pos = posInfo.count > 1 ? `T${posInfo.first}` : String(posInfo.first);
       }
+      // Cut players show "CUT"
+      if (status === 'cut') pos = 'CUT';
 
-      // Player status
-      let status = 'active';
-      // Check if any round shows CUT indicator (linescores length < expected)
-      // ESPN doesn't give explicit cut status in the competitor status field,
-      // so we detect it by checking if the player has fewer rounds than expected
+      // Current-round tee time (for the round in progress on the tournament)
+      const teeTime = teeTimes[crIdx] || null;
 
-      // Determine R4 tee time for display
-      let r4TeeTime = teeTime[3] || null;
-
-      players[slug] = {
+      const playerData = {
         name,
         r1: rounds[0],
         r2: rounds[1],
@@ -176,9 +204,18 @@ export default async function handler(req, res) {
         overallToPar,
         status,
         pos,
-        teeTime: r4TeeTime,
+        teeTime,
         espnId: String(athlete.id || ''),
       };
+
+      // Store under primary slug
+      players[slug] = playerData;
+
+      // Also store under alias slugs so team rosters can match
+      const aliases = ESPN_ALIASES[slug] || [];
+      for (const alias of aliases) {
+        players[alias] = playerData;
+      }
     });
 
     return res.status(200).json({

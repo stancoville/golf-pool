@@ -20,17 +20,9 @@ function formatPlayerName(fullName) {
   return `${parts[0][0]}. ${last}`;
 }
 
-/** Format a tee time string like "Sun Apr 12 14:25:00 PDT 2026" to "2:25 PM". */
-function formatTeeTime(raw) {
-  if (!raw) return null;
-  try {
-    const d = new Date(raw);
-    if (isNaN(d.getTime())) return null;
-    return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-  } catch {
-    return null;
-  }
-}
+// Tee times are already formatted by the API (e.g. "2:25 PM") in
+// tournament-local time. Just pass through.
+
 
 export default function TeamCard({ team, players, coursePar, currentRound }) {
   const teamPar = parDisplay(team._par);
@@ -179,11 +171,8 @@ function PlayerRow({ player, coursePar, currentRound, counting }) {
           main = String(value);
         } else if (roundNum === currentRound && player.teeTime) {
           // Show tee time for players who haven't started the current round
-          const formatted = formatTeeTime(player.teeTime);
-          if (formatted) {
-            main = formatted;
-            cellExtra = 'team-card__cell--tee';
-          }
+          main = player.teeTime;
+          cellExtra = 'team-card__cell--tee';
         }
 
         return (
