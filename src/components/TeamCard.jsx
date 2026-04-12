@@ -60,7 +60,6 @@ export default function TeamCard({ team, players, coursePar, currentRound }) {
           {ROUND_LABELS.map((label) => (
             <div key={label} className="team-card__col team-card__col--round">
               <span className="team-card__round-main">{label}</span>
-              <span className="team-card__round-sub">&nbsp;</span>
             </div>
           ))}
           <div className="team-card__col team-card__col--total">TOT</div>
@@ -145,7 +144,7 @@ function PlayerRow({ slug, player, coursePar, currentRound }) {
         const isPenaltyRound = isPenalized && original == null && value === 80;
 
         let main = '—';
-        let sub = '\u00a0';
+        let sub = null;
         let cellExtra = '';
 
         if (live) {
@@ -166,7 +165,7 @@ function PlayerRow({ slug, player, coursePar, currentRound }) {
             className={`team-card__col team-card__col--round ${cellExtra}`}
           >
             <span className="team-card__round-main">{main}</span>
-            <span className="team-card__round-sub">{sub}</span>
+            {sub && <span className="team-card__round-sub">{sub}</span>}
           </div>
         );
       })}
