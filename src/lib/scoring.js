@@ -104,23 +104,23 @@ const COUNT_BEST = 4;
 
 /**
  * Return the indices of the best COUNT_BEST players on a team, sorted by
- * ascending playerTotal. Used by both teamScore and teamParRelative so
- * they agree on which players count.
+ * ascending par-relative score. Used by teamScore, teamParRelative, and
+ * the UI to decide which players are "counting".
  */
-export function bestPlayerIndices(team, players, currentRound = 4) {
+export function bestPlayerIndices(team, players, currentRound = 4, coursePar = 72) {
   const indexed = team.players.map((slug, i) => ({
     i,
-    total: playerTotal(players[slug], currentRound),
+    par: playerParRelative(players[slug], coursePar, currentRound),
   }));
-  indexed.sort((a, b) => a.total - b.total);
+  indexed.sort((a, b) => a.par - b.par);
   return new Set(indexed.slice(0, COUNT_BEST).map((x) => x.i));
 }
 
 /**
  * Sum of the best four players' playerTotal (best-4-of-6).
  */
-export function teamScore(team, players, currentRound = 4) {
-  const best = bestPlayerIndices(team, players, currentRound);
+export function teamScore(team, players, coursePar = 72, currentRound = 4) {
+  const best = bestPlayerIndices(team, players, currentRound, coursePar);
   return team.players.reduce((acc, slug, i) => {
     if (!best.has(i)) return acc;
     return acc + playerTotal(players[slug], currentRound);
@@ -128,26 +128,30 @@ export function teamScore(team, players, currentRound = 4) {
 }
 
 /**
+ * A single player's overall score relative to par. Prefers the ESPN-provided
+ * `overallToPar` when available (it accounts for in-progress rounds
+ * correctly). Falls back to computing from completed strokes + in-progress
+ * par diff.
+ */
+export function playerParRelative(p, coursePar, currentRound = 4) {
+  if (!p) return 0;
+  if (p.overallToPar != null) return p.overallToPar;
+  const rounds = playerRounds(p, currentRound);
+  const played = roundsPlayed(p, currentRound);
+  const completedStrokes = rounds.reduce((a, v) => a + (v == null ? 0 : v), 0);
+  return completedStrokes - played * coursePar + inProgressParDiff(p, currentRound);
+}
+
+/**
  * The team's score relative to par, counting only the best four players.
- * For each counted player we add their completed stroke total minus their
- * completed-round par baseline, then add the in-progress current round's
- * score-to-par directly.
+ * Uses each player's overallToPar from ESPN when available.
  */
 export function teamParRelative(team, players, coursePar, currentRound = 4) {
   const best = bestPlayerIndices(team, players, currentRound);
   let diff = 0;
   team.players.forEach((slug, i) => {
     if (!best.has(i)) return;
-    const p = players[slug];
-    if (!p) return;
-    const rounds = playerRounds(p, currentRound);
-    const played = roundsPlayed(p, currentRound);
-    const completedStrokes = rounds.reduce(
-      (a, v) => a + (v == null ? 0 : v),
-      0
-    );
-    diff += completedStrokes - played * coursePar;
-    diff += inProgressParDiff(p, currentRound);
+    diff += playerParRelative(players[slug], coursePar, currentRound);
   });
   return diff;
 }
@@ -182,7 +186,7 @@ export function rankTeams(teams, players, coursePar, currentRound = 4) {
   if (!Array.isArray(teams) || teams.length === 0) return [];
 
   const enriched = teams.map((t) => {
-    const _score = teamScore(t, players, currentRound);
+    const _score = teamScore(t, players, coursePar, currentRound);
     const _par = teamParRelative(t, players, coursePar, currentRound);
     return { ...t, _score, _par };
   });

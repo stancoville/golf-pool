@@ -1,22 +1,14 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Header from './components/Header.jsx';
 import TeamCard from './components/TeamCard.jsx';
 import { useLeaderboard } from './hooks/useLeaderboard.js';
 
 const COURSE_PAR = 72;
 
-const ROUND_TABS = [1, 2, 3, 4];
-
 export default function App() {
   const { ranked, players, tournament, lastSync } = useLeaderboard();
 
   const [query, setQuery] = useState('');
-  const [activeRound, setActiveRound] = useState(tournament.currentRound);
-
-  // Sync the active round whenever the tournament's current round changes.
-  useEffect(() => {
-    setActiveRound(tournament.currentRound);
-  }, [tournament.currentRound]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -37,7 +29,7 @@ export default function App() {
     : '—';
 
   return (
-    <div className="app" data-active-round={activeRound}>
+    <div className="app">
       <Header tournament={tournament} />
 
       <main className="app__main">
@@ -47,29 +39,11 @@ export default function App() {
             <input
               type="search"
               className="toolbar__input"
-              placeholder="Search team or player picker…"
+              placeholder="Search team or player…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               aria-label="Search teams"
             />
-          </div>
-
-          <div className="toolbar__rounds" role="tablist" aria-label="Rounds">
-            {ROUND_TABS.map((r) => {
-              const isActive = r === activeRound;
-              return (
-                <button
-                  key={r}
-                  type="button"
-                  role="tab"
-                  aria-selected={isActive}
-                  className={`round-tab ${isActive ? 'round-tab--active' : ''}`}
-                  onClick={() => setActiveRound(r)}
-                >
-                  R{r}
-                </button>
-              );
-            })}
           </div>
 
           <div className="toolbar__refresh">
@@ -292,47 +266,6 @@ const styles = `
   font-style: italic;
 }
 
-.toolbar__rounds {
-  display: flex;
-  gap: 4px;
-  padding: 4px;
-  background: var(--cream);
-  border: 1px solid rgba(0, 103, 71, 0.1);
-  border-radius: 10px;
-}
-.round-tab {
-  appearance: none;
-  border: none;
-  background: transparent;
-  padding: 8px 16px;
-  font-family: 'DM Mono', ui-monospace, monospace;
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
-  border-radius: 6px;
-  position: relative;
-  transition: color 0.2s ease, background-color 0.2s ease;
-}
-.round-tab:hover {
-  color: var(--green-deep);
-}
-.round-tab--active {
-  color: var(--green-deep);
-  background: var(--white);
-  box-shadow: 0 1px 2px rgba(0, 77, 53, 0.1);
-}
-.round-tab--active::after {
-  content: "";
-  position: absolute;
-  left: 16%;
-  right: 16%;
-  bottom: -2px;
-  height: 3px;
-  border-radius: 2px;
-  background: linear-gradient(90deg, var(--accent), var(--accent-dim));
-}
-
 .toolbar__refresh {
   display: flex;
   align-items: center;
@@ -463,9 +396,9 @@ const styles = `
 .team-card__header .team-card__par--over  { color: #f3a59c; }
 .team-card__header .team-card__par--even  { color: rgba(245, 245, 240, 0.85); }
 
-/* Card body (white bg) — readable colors */
-.team-card__col.team-card__par--under { color: var(--green-deep); font-weight: 500; }
-.team-card__col.team-card__par--over  { color: var(--red);        font-weight: 500; }
+/* Card body (white bg) — under par = red, even/over = black */
+.team-card__col.team-card__par--under { color: var(--red);       font-weight: 500; }
+.team-card__col.team-card__par--over  { color: var(--text-dark); font-weight: 500; }
 .team-card__col.team-card__par--even  { color: var(--text-dark); }
 
 .team-card__tiebreaker {
@@ -492,7 +425,7 @@ const styles = `
 }
 .team-card__row {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) repeat(4, minmax(0, 0.8fr)) minmax(0, 0.7fr) minmax(0, 0.7fr);
+  grid-template-columns: minmax(0, 0.5fr) minmax(0, 1.6fr) repeat(4, minmax(0, 0.8fr)) minmax(0, 0.7fr);
   align-items: center;
   gap: 0;
   padding: 6px 10px;
@@ -524,6 +457,10 @@ const styles = `
   font-variant-numeric: tabular-nums;
   min-width: 0;
 }
+.team-card__col--pos {
+  font-size: 11px;
+  color: var(--text-muted);
+}
 .team-card__col--player {
   text-align: left;
   font-family: 'EB Garamond', serif;
@@ -546,14 +483,6 @@ const styles = `
 .team-card__strike .team-card__player-name {
   text-decoration: line-through;
   text-decoration-color: rgba(138, 158, 148, 0.7);
-}
-.team-card__col--total {
-  font-weight: 500;
-  color: var(--text-dark);
-  font-size: 12px;
-}
-.team-card__row--penalized .team-card__col--total {
-  color: var(--cut-gray);
 }
 .team-card__col--par {
   font-size: 12px;
@@ -591,6 +520,11 @@ const styles = `
   font-style: italic;
   color: var(--cut-gray);
 }
+.team-card__cell--tee .team-card__round-main {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-style: italic;
+}
 
 .team-card__badge {
   display: inline-flex;
@@ -612,14 +546,6 @@ const styles = `
 .team-card__badge--wd {
   background: rgba(138, 158, 148, 0.18);
   color: var(--text-muted);
-}
-
-/* Highlight the column matching the active round tab */
-.app[data-active-round="1"] .team-card__row > .team-card__col--round:nth-of-type(2),
-.app[data-active-round="2"] .team-card__row > .team-card__col--round:nth-of-type(3),
-.app[data-active-round="3"] .team-card__row > .team-card__col--round:nth-of-type(4),
-.app[data-active-round="4"] .team-card__row > .team-card__col--round:nth-of-type(5) {
-  background: rgba(251, 243, 8, 0.12);
 }
 
 /* ----- Footer ----- */
@@ -687,9 +613,6 @@ const styles = `
   }
   .team-card__round-sub {
     font-size: 7px;
-  }
-  .team-card__col--total {
-    font-size: 11px;
   }
   .team-card__col--par {
     font-size: 11px;

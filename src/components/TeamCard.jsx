@@ -3,6 +3,7 @@ import {
   bestPlayerIndices,
   isRoundInProgress,
   parDisplay,
+  playerParRelative,
   playerRounds,
   playerTotal,
   roundsPlayed,
@@ -11,10 +12,6 @@ import {
 
 const ROUND_LABELS = ['R1', 'R2', 'R3', 'R4'];
 
-/**
- * "Rory McIlroy" -> "R. McIlroy". Multi-word last names like "DeChambeau"
- * stay intact; one-word names are returned untouched.
- */
 function formatPlayerName(fullName) {
   if (!fullName) return '';
   const parts = fullName.trim().split(/\s+/);
@@ -23,13 +20,30 @@ function formatPlayerName(fullName) {
   return `${parts[0][0]}. ${last}`;
 }
 
-/**
- * A single team card. Shows the team header, tiebreaker strip, and a row
- * for every player on the roster with their per-round scores.
- */
+/** Format a tee time string like "Sun Apr 12 14:25:00 PDT 2026" to "2:25 PM". */
+function formatTeeTime(raw) {
+  if (!raw) return null;
+  try {
+    const d = new Date(raw);
+    if (isNaN(d.getTime())) return null;
+    return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  } catch {
+    return null;
+  }
+}
+
 export default function TeamCard({ team, players, coursePar, currentRound }) {
   const teamPar = parDisplay(team._par);
-  const bestIndices = bestPlayerIndices(team, players, currentRound);
+  const bestIndices = bestPlayerIndices(team, players, currentRound, coursePar);
+
+  // Sort players by par-relative score (lowest first), preserving index for bestIndices
+  const sortedPlayers = team.players
+    .map((slug, idx) => ({ slug, idx }))
+    .sort((a, b) => {
+      const parA = playerParRelative(players[a.slug], coursePar, currentRound);
+      const parB = playerParRelative(players[b.slug], coursePar, currentRound);
+      return parA - parB;
+    });
 
   return (
     <article className="team-card">
@@ -58,21 +72,22 @@ export default function TeamCard({ team, players, coursePar, currentRound }) {
 
       <div className="team-card__table">
         <div className="team-card__row team-card__row--head">
+          <div className="team-card__col team-card__col--pos">POS</div>
           <div className="team-card__col team-card__col--player">Player</div>
           {ROUND_LABELS.map((label) => (
             <div key={label} className="team-card__col team-card__col--round">
               <span className="team-card__round-main">{label}</span>
             </div>
           ))}
-          <div className="team-card__col team-card__col--total">TOT</div>
           <div className="team-card__col team-card__col--par">PAR</div>
         </div>
 
-        {team.players.map((slug, idx) => {
+        {sortedPlayers.map(({ slug, idx }) => {
           const p = players[slug];
           if (!p) {
             return (
               <div key={slug} className="team-card__row team-card__row--missing">
+                <div className="team-card__col team-card__col--pos">—</div>
                 <div className="team-card__col team-card__col--player">
                   Unknown player
                 </div>
@@ -83,7 +98,6 @@ export default function TeamCard({ team, players, coursePar, currentRound }) {
           return (
             <PlayerRow
               key={slug}
-              slug={slug}
               player={p}
               coursePar={coursePar}
               currentRound={currentRound}
@@ -96,16 +110,13 @@ export default function TeamCard({ team, players, coursePar, currentRound }) {
   );
 }
 
-function PlayerRow({ slug, player, coursePar, currentRound, counting }) {
+function PlayerRow({ player, coursePar, currentRound, counting }) {
   const rounds = playerRounds(player, currentRound);
   const total = playerTotal(player, currentRound);
   const played = roundsPlayed(player, currentRound);
 
-  // Total par-relative for the player: completed-round diff + in-progress diff.
-  const completedDiff =
-    rounds.reduce((a, v) => a + (v == null ? 0 : v), 0) - played * coursePar;
-  const liveDiff = inProgressParDiff(player, currentRound);
-  const playerDiff = completedDiff + liveDiff;
+  // Use ESPN's overallToPar directly when available
+  const playerDiff = playerParRelative(player, coursePar, currentRound);
   const parText = parDisplay(playerDiff);
 
   const isCut = player.status === 'cut';
@@ -121,8 +132,12 @@ function PlayerRow({ slug, player, coursePar, currentRound, counting }) {
     .filter(Boolean)
     .join(' ');
 
+  // Tournament position
+  const pos = player.pos || '—';
+
   return (
     <div className={rowClass}>
+      <div className="team-card__col team-card__col--pos">{pos}</div>
       <div
         className={`team-card__col team-card__col--player ${
           isPenalized ? 'team-card__strike' : ''
@@ -162,6 +177,13 @@ function PlayerRow({ slug, player, coursePar, currentRound, counting }) {
           cellExtra = 'team-card__cell--penalty';
         } else if (value != null) {
           main = String(value);
+        } else if (roundNum === currentRound && player.teeTime) {
+          // Show tee time for players who haven't started the current round
+          const formatted = formatTeeTime(player.teeTime);
+          if (formatted) {
+            main = formatted;
+            cellExtra = 'team-card__cell--tee';
+          }
         }
 
         return (
@@ -175,9 +197,6 @@ function PlayerRow({ slug, player, coursePar, currentRound, counting }) {
         );
       })}
 
-      <div className="team-card__col team-card__col--total">
-        {total > 0 ? total : '—'}
-      </div>
       <div
         className={`team-card__col team-card__col--par team-card__par--${parText.cls}`}
       >
