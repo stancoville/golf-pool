@@ -1,18 +1,32 @@
 import React from 'react';
 import {
+  isRoundInProgress,
   parDisplay,
   playerRounds,
   playerTotal,
   roundsPlayed,
+  inProgressParDiff,
 } from '../lib/scoring.js';
 
 const ROUND_LABELS = ['R1', 'R2', 'R3', 'R4'];
 
 /**
+ * "Rory McIlroy" -> "R. McIlroy". Multi-word last names like "DeChambeau"
+ * stay intact; one-word names are returned untouched.
+ */
+function formatPlayerName(fullName) {
+  if (!fullName) return '';
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0];
+  const last = parts.slice(1).join(' ');
+  return `${parts[0][0]}. ${last}`;
+}
+
+/**
  * A single team card. Shows the team header, tiebreaker strip, and a row
  * for every player on the roster with their per-round scores.
  */
-export default function TeamCard({ team, players, coursePar }) {
+export default function TeamCard({ team, players, coursePar, currentRound }) {
   const teamPar = parDisplay(team._par);
 
   return (
@@ -26,10 +40,10 @@ export default function TeamCard({ team, players, coursePar }) {
           <p className="team-card__by">by {team.submittedBy}</p>
         </div>
         <div className="team-card__totals">
-          <div className="team-card__strokes">{team._score}</div>
-          <div className={`team-card__par team-card__par--${teamPar.cls}`}>
+          <div className={`team-card__par-big team-card__par--${teamPar.cls}`}>
             {teamPar.str}
           </div>
+          <div className="team-card__strokes-small">{team._score} strokes</div>
         </div>
       </div>
 
@@ -43,10 +57,10 @@ export default function TeamCard({ team, players, coursePar }) {
       <div className="team-card__table">
         <div className="team-card__row team-card__row--head">
           <div className="team-card__col team-card__col--player">Player</div>
-          <div className="team-card__col team-card__col--badge" />
           {ROUND_LABELS.map((label) => (
             <div key={label} className="team-card__col team-card__col--round">
-              {label}
+              <span className="team-card__round-main">{label}</span>
+              <span className="team-card__round-sub">&nbsp;</span>
             </div>
           ))}
           <div className="team-card__col team-card__col--total">TOT</div>
@@ -70,6 +84,7 @@ export default function TeamCard({ team, players, coursePar }) {
               slug={slug}
               player={p}
               coursePar={coursePar}
+              currentRound={currentRound}
             />
           );
         })}
@@ -78,17 +93,22 @@ export default function TeamCard({ team, players, coursePar }) {
   );
 }
 
-function PlayerRow({ slug, player, coursePar }) {
-  const rounds = playerRounds(player);
-  const total = playerTotal(player);
-  const played = roundsPlayed(player);
-  const par = played * coursePar;
-  const diff = played > 0 ? total - par : 0;
-  const parText = parDisplay(diff);
+function PlayerRow({ slug, player, coursePar, currentRound }) {
+  const rounds = playerRounds(player, currentRound);
+  const total = playerTotal(player, currentRound);
+  const played = roundsPlayed(player, currentRound);
+
+  // Total par-relative for the player: completed-round diff + in-progress diff.
+  const completedDiff =
+    rounds.reduce((a, v) => a + (v == null ? 0 : v), 0) - played * coursePar;
+  const liveDiff = inProgressParDiff(player, currentRound);
+  const playerDiff = completedDiff + liveDiff;
+  const parText = parDisplay(playerDiff);
 
   const isCut = player.status === 'cut';
   const isWd = player.status === 'wd';
   const isPenalized = isCut || isWd;
+  const showPar = played > 0 || isRoundInProgress(player, currentRound);
 
   const rowClass = [
     'team-card__row',
@@ -97,47 +117,67 @@ function PlayerRow({ slug, player, coursePar }) {
     .filter(Boolean)
     .join(' ');
 
-  const badgeClass = isCut
-    ? 'team-card__badge team-card__badge--cut'
-    : isWd
-      ? 'team-card__badge team-card__badge--wd'
-      : '';
-
   return (
     <div className={rowClass}>
       <div
         className={`team-card__col team-card__col--player ${
           isPenalized ? 'team-card__strike' : ''
         }`}
-        title={slug}
+        title={player.name}
       >
-        {player.name}
+        <span className="team-card__player-name">
+          {formatPlayerName(player.name)}
+        </span>
+        {isCut && (
+          <span className="team-card__badge team-card__badge--cut">CUT</span>
+        )}
+        {isWd && (
+          <span className="team-card__badge team-card__badge--wd">WD</span>
+        )}
       </div>
-      <div className="team-card__col team-card__col--badge">
-        {isCut && <span className={badgeClass}>CUT</span>}
-        {isWd && <span className={badgeClass}>WD</span>}
-      </div>
+
       {rounds.map((value, idx) => {
-        const original = player[`r${idx + 1}`];
-        const isPenaltyRound = isPenalized && original == null;
-        const cellClass = [
-          'team-card__col',
-          'team-card__col--round',
-          isPenaltyRound ? 'team-card__cell--penalty' : '',
-        ]
-          .filter(Boolean)
-          .join(' ');
+        const roundNum = idx + 1;
+        const original = player[`r${roundNum}`];
+        const live =
+          roundNum === currentRound &&
+          isRoundInProgress(player, currentRound);
+        const isPenaltyRound = isPenalized && original == null && value === 80;
+
+        let main = '—';
+        let sub = '\u00a0';
+        let cellExtra = '';
+
+        if (live) {
+          const lp = parDisplay(player.toPar || 0);
+          main = lp.str;
+          sub = `thru ${player.thru}`;
+          cellExtra = `team-card__cell--live team-card__par--${lp.cls}`;
+        } else if (isPenaltyRound) {
+          main = '80';
+          cellExtra = 'team-card__cell--penalty';
+        } else if (value != null) {
+          main = String(value);
+        }
+
         return (
-          <div key={idx} className={cellClass}>
-            {value == null ? '—' : value}
+          <div
+            key={idx}
+            className={`team-card__col team-card__col--round ${cellExtra}`}
+          >
+            <span className="team-card__round-main">{main}</span>
+            <span className="team-card__round-sub">{sub}</span>
           </div>
         );
       })}
-      <div className="team-card__col team-card__col--total">{total || '—'}</div>
+
+      <div className="team-card__col team-card__col--total">
+        {total > 0 ? total : '—'}
+      </div>
       <div
         className={`team-card__col team-card__col--par team-card__par--${parText.cls}`}
       >
-        {played > 0 ? parText.str : '—'}
+        {showPar ? parText.str : '—'}
       </div>
     </div>
   );

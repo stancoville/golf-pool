@@ -98,8 +98,8 @@ export function useLeaderboard() {
   }, [fetchData]);
 
   const ranked = useMemo(
-    () => rankTeams(teams, players, COURSE_PAR),
-    [teams, players]
+    () => rankTeams(teams, players, COURSE_PAR, tournament.currentRound),
+    [teams, players, tournament.currentRound]
   );
 
   return {
