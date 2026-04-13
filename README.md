@@ -29,8 +29,7 @@ Click **Fork** on GitHub to create your own copy.
 ### 2. Set up Supabase
 
 1. Create a free project at [supabase.com](https://supabase.com)
-2. Go to **SQL Editor** and run the contents of `supabase/schema.sql` to create the base tables
-3. Then run `supabase/migration-001-platform.sql` to add tiering, registration, and RLS policies
+2. Go to **SQL Editor** and run the contents of `supabase/schema.sql` to create all tables, indexes, and RLS policies
 4. Go to **Authentication > Users** and click **Create User** to make your admin account (email + password)
 5. Note your project credentials from **Settings > API**:
    - Project URL
@@ -107,8 +106,7 @@ golf-pool/
 │   ├── index.css                 # CSS variables + resets
 │   └── data/mockData.js          # Offline/dev mock data
 ├── supabase/
-│   ├── schema.sql                # Base database schema
-│   └── migration-001-platform.sql # Tiering, registration, RLS
+│   └── schema.sql                # Full database schema + RLS policies
 └── vercel.json                   # API routing + SPA rewrite
 ```
 
