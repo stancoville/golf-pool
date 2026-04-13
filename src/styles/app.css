@@ -706,6 +706,200 @@
   border-radius: 4px;
 }
 
+/* ----- Tier Picker ----- */
+.tier-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+.tier-picker__tier {
+  background: var(--white);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: var(--shadow-card);
+}
+.tier-picker__label {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--green-deep);
+  margin: 0 0 12px;
+}
+.tier-picker__count {
+  font-family: 'DM Mono', ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+.tier-picker__grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tier-picker__player {
+  padding: 8px 14px;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  background: var(--cream);
+  font-family: 'EB Garamond', serif;
+  font-size: 15px;
+  color: var(--text-dark);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.tier-picker__player:hover {
+  border-color: var(--green-deep);
+  background: rgba(0, 103, 71, 0.05);
+}
+.tier-picker__player--selected {
+  background: var(--green-deep);
+  color: var(--white);
+  border-color: var(--green-deep);
+}
+.tier-picker__empty {
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 14px;
+  margin: 0;
+}
+
+/* ----- Registration Form ----- */
+.registration-form {
+  max-width: 800px;
+  margin: 0 auto;
+}
+.registration-form__header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+.registration-form__title {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--green-deep);
+  margin: 0 0 4px;
+}
+.registration-form__subtitle {
+  font-family: 'EB Garamond', serif;
+  font-style: italic;
+  font-size: 18px;
+  color: var(--text-muted);
+  margin: 0 0 8px;
+}
+.registration-form__count {
+  font-family: 'DM Mono', ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+}
+.registration-form__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 400px;
+  margin: 0 auto 20px;
+}
+.registration-form__label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: 'DM Mono', ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.registration-form__hint {
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+.registration-form__input {
+  padding: 10px 12px;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  font-size: 16px;
+  font-family: inherit;
+  color: var(--text-dark);
+  background: var(--cream);
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+.registration-form__input:focus {
+  border-color: var(--green-mid, #2d8a6e);
+  box-shadow: 0 0 0 3px rgba(0, 103, 71, 0.1);
+}
+.registration-form__error {
+  color: var(--red);
+  font-size: 14px;
+  text-align: center;
+  margin: 0 0 12px;
+}
+.registration-form__submit {
+  display: block;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  background: var(--green-deep);
+  color: var(--white);
+  font-family: 'DM Mono', ui-monospace, monospace;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.registration-form__submit:hover:not(:disabled) {
+  background: var(--green-mid, #2d8a6e);
+}
+.registration-form__submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ----- Registration Success ----- */
+.registration-success {
+  text-align: center;
+  padding: 60px 20px;
+}
+.registration-success__title {
+  font-family: 'Playfair Display', serif;
+  font-size: 32px;
+  color: var(--green-deep);
+  margin: 0 0 12px;
+}
+.registration-success__text {
+  font-size: 16px;
+  color: var(--text-dark);
+  margin: 0 0 8px;
+}
+.registration-success__btn {
+  margin-top: 20px;
+  padding: 10px 24px;
+  border: 1px solid var(--green-deep);
+  border-radius: 8px;
+  background: var(--white);
+  color: var(--green-deep);
+  font-family: 'DM Mono', ui-monospace, monospace;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.registration-success__btn:hover {
+  background: var(--green-deep);
+  color: var(--white);
+}
+
 /* ----- Footer ----- */
 .footer {
   margin-top: 36px;

@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Header from '../components/Header.jsx';
+import RegistrationForm from '../components/RegistrationForm.jsx';
 import TeamCard from '../components/TeamCard.jsx';
 import { useLeaderboard } from '../hooks/useLeaderboard.js';
 
@@ -26,24 +27,41 @@ function SearchIcon() {
 
 /**
  * MainPage — adaptive based on tournament state.
- * Pre-tournament: registration form (TODO: Phase 5)
- * In progress / complete: leaderboard
+ * Pre-tournament with registration open: show registration form
+ * In progress / complete: show leaderboard
+ * No tournament: show coming soon
  */
 export default function MainPage() {
   const { ranked, players, tournament, lastSync } = useLeaderboard();
+  const [regData, setRegData] = useState(null);
+  const [regChecked, setRegChecked] = useState(false);
 
-  // TODO: When registration is implemented, check tournament.registrationOpen
-  // and show the registration form instead of the leaderboard.
-  const showLeaderboard = true;
+  // Check if registration is open (fetches from /api/register)
+  const checkRegistration = useCallback(async () => {
+    try {
+      const res = await fetch('/api/register');
+      if (res.ok) {
+        const data = await res.json();
+        setRegData(data);
+      }
+    } catch {
+      // Ignore — fall through to leaderboard
+    } finally {
+      setRegChecked(true);
+    }
+  }, []);
 
-  if (!showLeaderboard) {
+  useEffect(() => { checkRegistration(); }, [checkRegistration]);
+
+  // Show registration form when registration is open
+  const showRegistration = regData?.tournament?.registrationOpen === true;
+
+  if (showRegistration) {
     return (
       <div className="app">
         <Header tournament={tournament} />
         <main className="app__main">
-          <div className="empty">
-            <p>Registration coming soon.</p>
-          </div>
+          <RegistrationForm />
         </main>
       </div>
     );
