@@ -3,8 +3,16 @@
 //
 // GET /api/scores
 
+import { createClient } from '@supabase/supabase-js';
+
 const ESPN_SCOREBOARD =
   'https://site.api.espn.com/apis/site/v2/sports/golf/pga/scoreboard';
+
+// Lightweight supabase client to look up the active tournament's espn_id
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+const supabase =
+  supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
 function slugify(name) {
   return name
@@ -63,10 +71,26 @@ export default async function handler(req, res) {
     if (!espnRes.ok) throw new Error(`ESPN returned ${espnRes.status}`);
     const data = await espnRes.json();
 
+    // Find the right event. If we have a tournament in the DB, match by espn_id.
+    // Otherwise fall back to the first event in the scoreboard.
     const events = data.events || [];
-    let event = events.find((e) =>
-      e.name && e.name.toLowerCase().includes('masters')
-    ) || events[0];
+    let event = null;
+
+    if (supabase) {
+      const { data: tournament } = await supabase
+        .from('tournaments')
+        .select('espn_id')
+        .order('start_date', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (tournament?.espn_id) {
+        event = events.find((e) => String(e.id) === String(tournament.espn_id));
+      }
+    }
+
+    // Fall back to first event (covers the common case of one active tournament)
+    if (!event) event = events[0];
 
     if (!event) {
       return res.status(200).json({ players: {}, currentRound: 1, status: 'Scheduled' });
