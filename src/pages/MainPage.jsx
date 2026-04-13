@@ -3,6 +3,7 @@ import Header from '../components/Header.jsx';
 import RegistrationForm from '../components/RegistrationForm.jsx';
 import TeamCard from '../components/TeamCard.jsx';
 import { useLeaderboard } from '../hooks/useLeaderboard.js';
+import { useTheme } from '../hooks/useTournament.js';
 
 const COURSE_PAR = 72;
 
@@ -35,6 +36,9 @@ export default function MainPage() {
   const { ranked, players, tournament, lastSync } = useLeaderboard();
   const [regData, setRegData] = useState(null);
   const [regChecked, setRegChecked] = useState(false);
+
+  // Apply dynamic theme from tournament
+  useTheme(regData?.tournament || tournament);
 
   // Check if registration is open (fetches from /api/register)
   const checkRegistration = useCallback(async () => {

@@ -120,6 +120,7 @@ export function useLeaderboard() {
         venue: t.venue,
         currentRound: t.current_round,
         status: t.status,
+        theme: t.theme || {},
       });
       setTeamsLoaded(true);
       return t;
