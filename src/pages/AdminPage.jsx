@@ -1,5 +1,6 @@
 import React from 'react';
 import AdminLogin from '../components/AdminLogin.jsx';
+import TournamentSetup from '../components/TournamentSetup.jsx';
 import { useAuth } from '../hooks/useAuth.js';
 
 /**
@@ -46,9 +47,7 @@ export default function AdminPage() {
         <div className="admin-sections">
           <section className="admin-section">
             <h2 className="admin-section__title">Tournament Management</h2>
-            <p className="admin-section__placeholder">
-              Coming in Phase 4 — browse ESPN calendar, create tournaments, manage field &amp; tiers.
-            </p>
+            <TournamentSetup />
           </section>
 
           <section className="admin-section">
