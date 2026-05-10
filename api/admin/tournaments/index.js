@@ -1,5 +1,5 @@
-import { supabaseAdmin, requireAdmin } from '../lib/supabaseAdmin.js';
-import { buildAndWriteField } from '../lib/fieldBuilder.js';
+import { supabaseAdmin, requireAdmin } from '../../lib/supabaseAdmin.js';
+import { buildAndWriteField } from '../../lib/fieldBuilder.js';
 
 const ESPN_SCOREBOARD = 'https://site.api.espn.com/apis/site/v2/sports/golf/pga/scoreboard';
 
