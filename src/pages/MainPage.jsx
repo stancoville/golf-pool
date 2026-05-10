@@ -5,7 +5,6 @@ import TeamCard from '../components/TeamCard.jsx';
 import { useLeaderboard } from '../hooks/useLeaderboard.js';
 import { useTheme } from '../hooks/useTournament.js';
 
-const COURSE_PAR = 72;
 
 function SearchIcon() {
   return (
@@ -129,7 +128,7 @@ function Leaderboard({ ranked, players, tournament, lastSync }) {
                 key={team.id}
                 team={team}
                 players={players}
-                coursePar={COURSE_PAR}
+                coursePar={tournament.coursePar ?? 72}
                 currentRound={tournament.currentRound}
               />
             ))}

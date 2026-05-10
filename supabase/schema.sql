@@ -34,8 +34,14 @@ create table if not exists tournament_players (
   player_id uuid not null references players(id) on delete cascade,
   tier integer not null,
   sort_order integer not null,
+  odds integer,
+  odds_source text,
   unique (tournament_id, player_id)
 );
+
+-- Migration for existing deployments: add odds columns if they were missing.
+alter table tournament_players add column if not exists odds integer;
+alter table tournament_players add column if not exists odds_source text;
 
 -- ----- Teams (one per pool entry) -----
 create table if not exists teams (

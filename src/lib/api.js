@@ -18,7 +18,15 @@ export async function adminFetch(path, options = {}) {
     },
   });
 
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error || `API error ${res.status}`);
-  return json;
+  const text = await res.text();
+  let json = null;
+  if (text) {
+    try { json = JSON.parse(text); } catch { /* non-JSON body */ }
+  }
+
+  if (!res.ok) {
+    const msg = json?.error || text?.slice(0, 200) || `API error ${res.status}`;
+    throw new Error(`${res.status} — ${msg}`);
+  }
+  return json ?? {};
 }

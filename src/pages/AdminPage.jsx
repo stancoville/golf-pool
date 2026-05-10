@@ -1,6 +1,7 @@
 import React from 'react';
 import AdminLogin from '../components/AdminLogin.jsx';
 import TournamentSetup from '../components/TournamentSetup.jsx';
+import TeamManagement from '../components/TeamManagement.jsx';
 import { useAuth } from '../hooks/useAuth.js';
 
 /**
@@ -52,9 +53,7 @@ export default function AdminPage() {
 
           <section className="admin-section">
             <h2 className="admin-section__title">Team Management</h2>
-            <p className="admin-section__placeholder">
-              Coming in Phase 6 — view, edit, and delete registered teams.
-            </p>
+            <TeamManagement />
           </section>
         </div>
       </main>

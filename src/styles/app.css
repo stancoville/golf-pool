@@ -705,6 +705,280 @@
   background: rgba(0, 103, 71, 0.1);
   border-radius: 4px;
 }
+.tournament-setup__card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--white);
+  border: 1px solid var(--card-border);
+  border-left: 3px solid var(--green-deep);
+  border-radius: 8px;
+}
+.tournament-setup__card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.tournament-setup__fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+}
+.tournament-setup__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 80px;
+}
+.tournament-setup__field--wide {
+  flex: 1;
+  min-width: 200px;
+}
+.tournament-setup__field span {
+  font-family: 'DM Mono', ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.tournament-setup__field input {
+  padding: 6px 10px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--text-dark);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  background: var(--white);
+}
+.tournament-setup__field input:focus {
+  outline: 2px solid var(--green-deep);
+  outline-offset: -1px;
+}
+.tournament-setup__btn--ghost {
+  background: var(--white);
+  color: var(--green-deep);
+  border-color: var(--green-deep);
+}
+.tournament-setup__btn--ghost:hover:not(:disabled) {
+  background: rgba(0, 103, 71, 0.06);
+}
+.tournament-setup__btn--ghost:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.tournament-setup__refresh-banner {
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  background: rgba(0, 103, 71, 0.06);
+  border: 1px solid var(--card-border);
+  border-left: 3px solid var(--green-deep);
+  border-radius: 8px;
+}
+.tournament-setup__refresh-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  font-family: 'EB Garamond', serif;
+  font-size: 15px;
+  color: var(--text-dark);
+}
+.tournament-setup__refresh-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0 4px;
+}
+.tournament-setup__refresh-message {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--text-dark);
+}
+.tournament-setup__refresh-warning {
+  margin: 8px 0 4px;
+  font-size: 13px;
+  color: var(--red);
+  font-weight: 500;
+}
+.tournament-setup__refresh-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: var(--text-dark);
+}
+.tournament-setup__refresh-list li {
+  margin-bottom: 2px;
+}
+
+/* ----- Team Management ----- */
+.team-mgmt {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.team-mgmt__controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.team-mgmt__select {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 220px;
+}
+.team-mgmt__select span {
+  font-family: 'DM Mono', ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.team-mgmt__select select {
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--text-dark);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  background: var(--white);
+}
+.team-mgmt__count {
+  font-family: 'DM Mono', ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.team-mgmt__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.team-mgmt__row {
+  display: grid;
+  grid-template-columns: 1.2fr 2fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  background: var(--white);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+}
+.team-mgmt__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.team-mgmt__team-name {
+  font-family: 'EB Garamond', serif;
+  font-size: 16px;
+  color: var(--text-dark);
+}
+.team-mgmt__submitter {
+  font-family: 'DM Mono', ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.team-mgmt__picks {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+  min-width: 0;
+}
+.team-mgmt__pick {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.team-mgmt__pick-tier {
+  font-family: 'DM Mono', ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+.team-mgmt__pick-name {
+  font-size: 12px;
+  color: var(--text-dark);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.team-mgmt__actions {
+  display: flex;
+  gap: 6px;
+}
+.team-mgmt__editor {
+  padding: 14px 16px;
+  background: var(--cream);
+  border: 1px solid var(--green-deep);
+  border-left: 3px solid var(--green-deep);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.team-mgmt__editor-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.team-mgmt__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 160px;
+}
+.team-mgmt__field--narrow {
+  flex: 0 0 120px;
+}
+.team-mgmt__field span {
+  font-family: 'DM Mono', ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.team-mgmt__field input,
+.team-mgmt__field select {
+  padding: 6px 10px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--text-dark);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  background: var(--white);
+}
+.team-mgmt__picks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+.team-mgmt__editor-actions {
+  display: flex;
+  gap: 8px;
+}
+
+@media (max-width: 720px) {
+  .team-mgmt__row {
+    grid-template-columns: 1fr;
+  }
+  .team-mgmt__picks {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
 
 /* ----- Tier Picker ----- */
 .tier-picker {

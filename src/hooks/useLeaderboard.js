@@ -121,6 +121,7 @@ export function useLeaderboard() {
         currentRound: t.current_round,
         status: t.status,
         theme: t.theme || {},
+        coursePar: t.course_par || 72,
       });
       setTeamsLoaded(true);
       return t;
@@ -206,8 +207,8 @@ export function useLeaderboard() {
   }, [teamsLoaded, refreshScores]);
 
   const ranked = useMemo(
-    () => rankTeams(teams, players, COURSE_PAR, tournament.currentRound),
-    [teams, players, tournament.currentRound]
+    () => rankTeams(teams, players, tournament.coursePar ?? COURSE_PAR, tournament.currentRound),
+    [teams, players, tournament.coursePar, tournament.currentRound]
   );
 
   return {
