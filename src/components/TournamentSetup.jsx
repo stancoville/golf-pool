@@ -81,8 +81,9 @@ export default function TournamentSetup() {
 
     setBusy(tournament.id);
     try {
-      const data = await adminFetch(`/api/admin/tournaments/${tournament.id}/refresh-field`, {
+      const data = await adminFetch(`/api/admin/tournaments/${tournament.id}`, {
         method: 'POST',
+        body: JSON.stringify({ action: 'refresh-field' }),
       });
       setRefreshResult({ tournamentName: tournament.name, ...data });
       await fetchData();
