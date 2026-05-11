@@ -17,6 +17,20 @@
       href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,700&family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=DM+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
+
+    <script>
+      // Apply cached tournament theme before paint so returning visitors don't
+      // see a flash from the neutral default theme to the tournament's colors.
+      (function () {
+        try {
+          var raw = localStorage.getItem('tournament_theme_vars');
+          if (!raw) return;
+          var vars = JSON.parse(raw);
+          var s = document.documentElement.style;
+          for (var k in vars) s.setProperty(k, vars[k]);
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

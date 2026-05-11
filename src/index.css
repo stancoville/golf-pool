@@ -1,10 +1,13 @@
 :root {
-  --green-deep: #006747;
-  --green-mid: #00835c;
-  --green-dark: #004d35;
-  --accent: #fbf308;
-  --accent-light: #fcf654;
-  --accent-dim: #d4cd07;
+  /* Neutral golf palette — overridden per-tournament via useTournament.applyTheme.
+     Deliberately not Masters-iconic so first-paint doesn't read as Masters branding
+     before the tournament's actual theme loads. */
+  --green-deep: #1a5c3a;
+  --green-mid: #2d7a52;
+  --green-dark: #0f3d22;
+  --accent: #e8e0c8;
+  --accent-light: #f0e9d4;
+  --accent-dim: #c9bfa1;
   --cream: #f5f5f0;
   --cream-dark: #eaeae0;
   --text-dark: #0a2e1f;
@@ -12,7 +15,7 @@
   --red: #c0392b;
   --cut-gray: #8a9e94;
   --white: #ffffff;
-  --card-border: rgba(0, 103, 71, 0.15);
+  --card-border: rgba(26, 92, 58, 0.15);
   --shadow-card: 0 2px 8px rgba(0, 77, 53, 0.07),
     0 1px 3px rgba(0, 77, 53, 0.05);
   --shadow-hover: 0 12px 28px rgba(0, 77, 53, 0.16),

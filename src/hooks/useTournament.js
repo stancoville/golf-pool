@@ -1,8 +1,12 @@
 import { useEffect } from 'react';
 import { supabase } from '../lib/supabase.js';
 
-// Default theme (Masters green/gold) is already in index.css :root.
-// Dynamic themes override these CSS variables on <html>.
+// Neutral defaults live in index.css :root; dynamic themes override them.
+// Applied themes are cached in localStorage so the inline pre-paint script in
+// index.html can apply them on the next visit before React renders, eliminating
+// the flash from default → tournament colors.
+const THEME_CACHE_KEY = 'tournament_theme_vars';
+
 const THEME_VAR_MAP = {
   primary: '--green-deep',
   accent: '--accent',
@@ -40,14 +44,15 @@ function derivedVars(theme) {
  * Call with null/empty to reset to defaults.
  */
 export function applyTheme(theme) {
-  const root = document.documentElement;
-
   if (!theme || Object.keys(theme).length === 0) return;
 
   const vars = derivedVars(theme);
+  const root = document.documentElement;
   for (const [prop, value] of Object.entries(vars)) {
     root.style.setProperty(prop, value);
   }
+
+  try { localStorage.setItem(THEME_CACHE_KEY, JSON.stringify(vars)); } catch {}
 }
 
 /**
@@ -74,7 +79,8 @@ export function useTheme(tournament) {
     if (tournament?.theme) {
       applyTheme(tournament.theme);
     }
-    return () => clearTheme();
+    // Intentionally no cleanup — we want the applied theme to persist across
+    // navigations and re-renders. The next tournament's theme will overwrite it.
   }, [tournament?.theme]);
 }
 
