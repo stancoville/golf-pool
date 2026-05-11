@@ -99,7 +99,7 @@ async function handlePost(req, res) {
 
     if (tErr) throw tErr;
 
-    const fieldResult = await buildAndWriteField(tournament.id, espnId, name);
+    const fieldResult = await buildAndWriteField(tournament.id, espnId, name, startDate);
 
     return res.status(201).json({
       tournament,

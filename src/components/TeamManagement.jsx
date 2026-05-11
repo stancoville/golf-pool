@@ -3,12 +3,12 @@ import { supabase } from '../lib/supabase.js';
 import { adminFetch } from '../lib/api.js';
 
 const TIER_LABELS = {
-  1: 'Tier 1 — Favorites',
-  2: 'Tier 2 — Contenders',
-  3: 'Tier 3 — Solid Picks',
-  4: 'Tier 4 — Mid-Range',
-  5: 'Tier 5 — Sleepers',
-  6: 'Tier 6 — Long Shots',
+  1: 'Tier 1',
+  2: 'Tier 2',
+  3: 'Tier 3',
+  4: 'Tier 4',
+  5: 'Tier 5',
+  6: 'Tier 6',
 };
 
 export default function TeamManagement() {

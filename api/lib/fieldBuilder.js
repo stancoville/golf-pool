@@ -29,28 +29,55 @@ function slugify(name) {
     .replace(/(^-|-$)/g, '');
 }
 
-async function fetchEspnCompetitors(espnEventId) {
-  // Try the live scoreboard first (works for current/recent events).
-  try {
-    const sbRes = await fetch(ESPN_SCOREBOARD);
-    const sbData = await sbRes.json();
-    const event = sbData.events?.find((e) => String(e.id) === String(espnEventId));
-    const competitors = event?.competitions?.[0]?.competitors || [];
-    if (competitors.length > 0) return competitors;
-  } catch { /* try core */ }
+function compactDate(isoDate) {
+  if (!isoDate) return null;
+  return isoDate.slice(0, 10).replace(/-/g, '');
+}
 
-  // Fallback to the core API (needed for tournaments that aren't the active event).
+async function tryScoreboard(url, espnEventId) {
   try {
-    const coreRes = await fetch(
-      `${ESPN_CORE}/events/${espnEventId}/competitions/${espnEventId}/competitors?limit=200`
-    );
-    const coreData = await coreRes.json();
-    return (coreData.items || []).map((item) => ({
-      athlete: { id: item.id, displayName: '' },
-    }));
-  } catch {
-    return [];
+    const r = await fetch(url);
+    if (!r.ok) return [];
+    const data = await r.json();
+    const event = data.events?.find((e) => String(e.id) === String(espnEventId));
+    const competitors = event?.competitions?.[0]?.competitors || [];
+    // Filter out any competitor whose name didn't come through.
+    return competitors.filter((c) => c.athlete?.displayName);
+  } catch { return []; }
+}
+
+/**
+ * Fetch the field for an ESPN event, returning competitor objects with full
+ * athlete data (displayName + id). Tries multiple ESPN endpoints because the
+ * default scoreboard only returns the currently-active tournament; upcoming
+ * majors need to be fetched by date.
+ */
+async function fetchEspnCompetitors(espnEventId, startDate) {
+  // 1) Default scoreboard — works for the currently-active event.
+  let competitors = await tryScoreboard(ESPN_SCOREBOARD, espnEventId);
+  if (competitors.length > 0) return competitors;
+
+  // 2) Scoreboard scoped to the tournament's start date (works for upcoming
+  //    events whose field has been posted but isn't the live event).
+  const ymd = compactDate(startDate);
+  if (ymd) {
+    competitors = await tryScoreboard(`${ESPN_SCOREBOARD}?dates=${ymd}`, espnEventId);
+    if (competitors.length > 0) return competitors;
   }
+
+  // 3) Direct event endpoint (sometimes returns full athlete objects inline).
+  try {
+    const r = await fetch(`${ESPN_SCOREBOARD}?event=${espnEventId}`);
+    if (r.ok) {
+      const data = await r.json();
+      const event = data.events?.find((e) => String(e.id) === String(espnEventId));
+      competitors = (event?.competitions?.[0]?.competitors || [])
+        .filter((c) => c.athlete?.displayName);
+      if (competitors.length > 0) return competitors;
+    }
+  } catch { /* fall through */ }
+
+  return [];
 }
 
 async function upsertPlayer(name, espnAthleteId) {
@@ -80,14 +107,8 @@ async function upsertPlayer(name, espnAthleteId) {
  * Returns { count, oddsCount, oddsSource, mode, message } where mode is
  * 'odds' or 'espn' depending on which ranking was actually used.
  */
-export async function buildAndWriteField(tournamentId, espnEventId, tournamentName) {
-  const competitors = await fetchEspnCompetitors(espnEventId);
-  if (competitors.length === 0) {
-    return {
-      count: 0, oddsCount: 0, oddsSource: null, mode: 'none',
-      message: 'Field not yet available on ESPN. Try again closer to tournament start.',
-    };
-  }
+export async function buildAndWriteField(tournamentId, espnEventId, tournamentName, startDate) {
+  const competitors = await fetchEspnCompetitors(espnEventId, startDate);
 
   // Build a normalized list of {name, espnId, espnIndex}
   const players = [];
@@ -102,6 +123,16 @@ export async function buildAndWriteField(tournamentId, espnEventId, tournamentNa
       slug: slugify(name),
       espnIndex: i,
     });
+  }
+
+  // Bail out BEFORE wiping the existing field if ESPN gave us nothing usable.
+  // Otherwise a refresh would empty the table and break the registration form.
+  if (players.length === 0) {
+    return {
+      count: 0, oddsCount: 0, oddsSource: null, mode: 'none',
+      message: 'ESPN returned no field data for this event. Existing field (if any) was preserved. ' +
+        'Try again closer to tournament start.',
+    };
   }
 
   // Try to fetch odds.

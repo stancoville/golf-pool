@@ -35,13 +35,15 @@ async function handlePost(req, res, id) {
   try {
     const { data: tournament, error: tErr } = await supabaseAdmin
       .from('tournaments')
-      .select('id, name, espn_id, registration_open')
+      .select('id, name, espn_id, registration_open, start_date')
       .eq('id', id)
       .single();
     if (tErr || !tournament) return res.status(404).json({ error: 'Tournament not found' });
     if (!tournament.espn_id) return res.status(400).json({ error: 'Tournament has no ESPN ID' });
 
-    const result = await buildAndWriteField(tournament.id, tournament.espn_id, tournament.name);
+    const result = await buildAndWriteField(
+      tournament.id, tournament.espn_id, tournament.name, tournament.start_date
+    );
 
     // Compare current team picks against the freshly-written tier layout.
     const { data: tps } = await supabaseAdmin
