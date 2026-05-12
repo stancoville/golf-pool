@@ -82,9 +82,20 @@ async function fetchEspnCompetitors(espnEventId, startDate) {
 
 async function upsertPlayer(name, espnAthleteId) {
   if (espnAthleteId) {
-    const { data: existing } = await supabaseAdmin
+    const { data: byId } = await supabaseAdmin
       .from('players').select('id').eq('espn_id', espnAthleteId).maybeSingle();
-    if (existing) return existing.id;
+    if (byId) return byId.id;
+
+    // No ESPN-ID match — try by name. If the player exists (e.g. inserted via
+    // Odds-API-only flow), backfill the ESPN ID so future refreshes match by ID.
+    const { data: byName } = await supabaseAdmin
+      .from('players').select('id, espn_id').ilike('name', name).maybeSingle();
+    if (byName) {
+      if (!byName.espn_id) {
+        await supabaseAdmin.from('players').update({ espn_id: espnAthleteId }).eq('id', byName.id);
+      }
+      return byName.id;
+    }
 
     const { data: inserted } = await supabaseAdmin
       .from('players').insert({ name, espn_id: espnAthleteId }).select('id').single();
@@ -104,13 +115,19 @@ async function upsertPlayer(name, espnAthleteId) {
  * Fetch the field for a tournament, attach odds, compute tiers, and write
  * tournament_players rows. Replaces any existing field for this tournament.
  *
- * Returns { count, oddsCount, oddsSource, mode, message } where mode is
- * 'odds' or 'espn' depending on which ranking was actually used.
+ * Field-source priority:
+ *   1. ESPN competitors + Odds API prices (best — ESPN gives athlete IDs)
+ *   2. Odds API outcomes as the field (when ESPN has no field yet)
+ *   3. ESPN sort order alone (when odds aren't posted)
+ *
+ * Returns { count, oddsCount, oddsSource, mode, message }.
  */
 export async function buildAndWriteField(tournamentId, espnEventId, tournamentName, startDate) {
   const competitors = await fetchEspnCompetitors(espnEventId, startDate);
+  const sportKey = detectSportKey(tournamentName);
+  const oddsResult = sportKey ? await fetchTournamentOdds(sportKey) : null;
 
-  // Build a normalized list of {name, espnId, espnIndex}
+  // ---- Build the candidate player list ----
   const players = [];
   for (let i = 0; i < competitors.length; i++) {
     const c = competitors[i];
@@ -125,32 +142,48 @@ export async function buildAndWriteField(tournamentId, espnEventId, tournamentNa
     });
   }
 
-  // Bail out BEFORE wiping the existing field if ESPN gave us nothing usable.
-  // Otherwise a refresh would empty the table and break the registration form.
+  // If ESPN has no field yet, fall through to The Odds API as the field source.
+  let fieldFromOdds = false;
   if (players.length === 0) {
-    return {
-      count: 0, oddsCount: 0, oddsSource: null, mode: 'none',
-      message: 'ESPN returned no field data for this event. Existing field (if any) was preserved. ' +
-        'Try again closer to tournament start.',
-    };
+    if (!oddsResult || oddsResult.outcomes.length === 0) {
+      return {
+        count: 0, oddsCount: 0, oddsSource: null, mode: 'none',
+        message: 'No field data from ESPN or The Odds API. Existing field (if any) was preserved. ' +
+          'Try again closer to tournament start.',
+      };
+    }
+    fieldFromOdds = true;
+    for (let i = 0; i < oddsResult.outcomes.length; i++) {
+      const o = oddsResult.outcomes[i];
+      players.push({
+        name: o.name,
+        espnId: '',
+        slug: o.slug,
+        espnIndex: i,
+        odds: o.price,
+        oddsSource: oddsResult.source,
+      });
+    }
   }
 
-  // Try to fetch odds.
-  const sportKey = detectSportKey(tournamentName);
-  const oddsResult = sportKey ? await fetchTournamentOdds(sportKey) : null;
-
-  let mode = 'espn';
-  if (oddsResult && oddsResult.count >= ODDS_THRESHOLD) {
+  // ---- Decide tiering mode ----
+  let mode;
+  if (fieldFromOdds) {
+    mode = 'odds-only';
+  } else if (oddsResult && oddsResult.count >= ODDS_THRESHOLD) {
     mode = 'odds';
     for (const p of players) {
       const o = oddsResult.bySlug.get(p.slug);
       if (o) { p.odds = o.price; p.oddsSource = oddsResult.source; }
     }
+  } else {
+    mode = 'espn';
   }
 
-  // Sort the field.
-  if (mode === 'odds') {
-    // Priced players first, by lowest price; unpriced players keep ESPN order at the end.
+  // ---- Sort ----
+  if (mode === 'odds' || mode === 'odds-only') {
+    // Priced players first, by lowest price; unpriced (ESPN-only stragglers)
+    // keep their ESPN sort order at the end.
     players.sort((a, b) => {
       const aHas = a.odds != null, bHas = b.odds != null;
       if (aHas && !bHas) return -1;
@@ -162,14 +195,15 @@ export async function buildAndWriteField(tournamentId, espnEventId, tournamentNa
     players.sort((a, b) => a.espnIndex - b.espnIndex);
   }
 
-  // Assign tiers: 15/15/15/15/15/rest. In odds mode, force any unpriced player
-  // into tier 6 even if they'd otherwise rank into the top 75.
+  // ---- Assign tiers: 15/15/15/15/15/rest ----
+  // In odds-aware modes, force any unpriced player into tier 6 even if they'd
+  // otherwise rank into the top 75.
   let cursor = 0;
   for (let t = 0; t < TIER_SIZES.length; t++) {
     const end = Math.min(cursor + TIER_SIZES[t], players.length);
     while (cursor < end) {
       const p = players[cursor];
-      if (mode === 'odds' && p.odds == null) {
+      if ((mode === 'odds' || mode === 'odds-only') && p.odds == null) {
         p.tier = 6;
       } else {
         p.tier = t + 1;
@@ -212,11 +246,15 @@ export async function buildAndWriteField(tournamentId, espnEventId, tournamentNa
 
   const oddsCount = players.filter((p) => p.odds != null).length;
   const sourceLabel = oddsResult?.sourceTitle || oddsResult?.source || null;
+  const tier6Size = Math.max(0, rows.length - 75);
 
   let message;
-  if (mode === 'odds') {
+  if (mode === 'odds-only') {
+    message = `Field of ${rows.length} players from ${sourceLabel} ` +
+      `(ESPN field not yet posted). Tiers 1–5 by odds rank (15 each), tier 6 = ${tier6Size} players.`;
+  } else if (mode === 'odds') {
     message = `Field of ${rows.length} players, ${oddsCount} with odds from ${sourceLabel}. ` +
-      `Tiers 1–5 by odds rank (15 each), tier 6 = ${rows.length - 75} players.`;
+      `Tiers 1–5 by odds rank (15 each), tier 6 = ${tier6Size} players.`;
   } else if (sportKey && oddsResult) {
     message = `Only ${oddsResult.count} players had odds (need ${ODDS_THRESHOLD}). ` +
       `Falling back to ESPN sort order. Refresh later when odds firm up.`;

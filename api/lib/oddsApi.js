@@ -74,27 +74,46 @@ export async function fetchTournamentOdds(sportKey) {
   const event = data[0];
   const bookmakers = event.bookmakers || [];
 
-  let best = null;
+  // Prefer DraftKings (recognizable brand, consistent coverage). Fall back to
+  // whichever bookmaker has the deepest field if DK isn't available or has
+  // posted no outcomes.
+  const PREFERRED = 'draftkings';
+  let chosen = null;
   for (const bm of bookmakers) {
     const market = (bm.markets || []).find((m) => m.key === 'outrights');
     const outcomes = market?.outcomes || [];
-    if (!best || outcomes.length > best.outcomes.length) {
-      best = { key: bm.key, title: bm.title, outcomes };
+    if (bm.key === PREFERRED && outcomes.length > 0) {
+      chosen = { key: bm.key, title: bm.title, outcomes };
+      break;
+    }
+  }
+  if (!chosen) {
+    for (const bm of bookmakers) {
+      const market = (bm.markets || []).find((m) => m.key === 'outrights');
+      const outcomes = market?.outcomes || [];
+      if (!chosen || outcomes.length > chosen.outcomes.length) {
+        chosen = { key: bm.key, title: bm.title, outcomes };
+      }
     }
   }
 
-  if (!best || best.outcomes.length === 0) return null;
+  if (!chosen || chosen.outcomes.length === 0) return null;
+
+  // Normalize outcomes: filter invalid rows, attach slug, sort by price (the
+  // most-favored players first). This list is the canonical priced field.
+  const normalized = chosen.outcomes
+    .filter((o) => o.name && typeof o.price === 'number')
+    .map((o) => ({ name: o.name, slug: slugify(o.name), price: o.price }))
+    .sort((a, b) => a.price - b.price);
 
   const bySlug = new Map();
-  for (const o of best.outcomes) {
-    if (!o.name || typeof o.price !== 'number') continue;
-    bySlug.set(slugify(o.name), { price: o.price, name: o.name });
-  }
+  for (const o of normalized) bySlug.set(o.slug, { price: o.price, name: o.name });
 
   return {
     bySlug,
-    source: best.key,
-    sourceTitle: best.title,
-    count: bySlug.size,
+    outcomes: normalized,
+    source: chosen.key,
+    sourceTitle: chosen.title,
+    count: normalized.length,
   };
 }
