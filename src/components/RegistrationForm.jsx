@@ -169,6 +169,10 @@ export default function RegistrationForm() {
 
       {error && <p className="registration-form__error">{error}</p>}
 
+      <p className="registration-form__entry-fee">
+        $50 Venmo to <strong>@stancoville</strong>
+      </p>
+
       <button
         type="submit"
         className="registration-form__submit"

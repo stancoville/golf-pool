@@ -1126,6 +1126,19 @@
   text-align: center;
   margin: 0 0 12px;
 }
+.registration-form__entry-fee {
+  text-align: center;
+  margin: 0 0 12px;
+  font-family: 'DM Mono', ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.registration-form__entry-fee strong {
+  color: var(--green-deep);
+  font-weight: 500;
+}
 .registration-form__submit {
   display: block;
   width: 100%;
