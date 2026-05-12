@@ -1016,6 +1016,9 @@
   gap: 8px;
 }
 .tier-picker__player {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
   padding: 8px 14px;
   border: 1px solid var(--card-border);
   border-radius: 8px;
@@ -1034,6 +1037,15 @@
   background: var(--green-deep);
   color: var(--white);
   border-color: var(--green-deep);
+}
+.tier-picker__player-odds {
+  font-family: 'DM Mono', ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+}
+.tier-picker__player--selected .tier-picker__player-odds {
+  color: var(--accent);
 }
 .tier-picker__empty {
   color: var(--text-muted);

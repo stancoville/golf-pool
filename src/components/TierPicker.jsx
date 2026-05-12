@@ -1,5 +1,10 @@
 import React from 'react';
 
+function formatOdds(price) {
+  if (price == null) return '';
+  return price > 0 ? `+${price}` : String(price);
+}
+
 const TIER_LABELS = {
   1: 'Tier 1',
   2: 'Tier 2',
@@ -39,7 +44,10 @@ export default function TierPicker({ tiers, picks, onPick }) {
                     className={`tier-picker__player ${isSelected ? 'tier-picker__player--selected' : ''}`}
                     onClick={() => onPick(tier, p.id)}
                   >
-                    {p.name}
+                    <span className="tier-picker__player-name">{p.name}</span>
+                    {p.odds != null && (
+                      <span className="tier-picker__player-odds">{formatOdds(p.odds)}</span>
+                    )}
                   </button>
                 );
               })}

@@ -42,7 +42,7 @@ async function handleGet(req, res) {
     // Get the field with player details, grouped by tier
     const { data: field, error: fErr } = await supabase
       .from('tournament_players')
-      .select('tier, sort_order, player_id, players(id, name)')
+      .select('tier, sort_order, player_id, odds, players(id, name)')
       .eq('tournament_id', tournament.id)
       .order('sort_order', { ascending: true });
 
@@ -57,6 +57,7 @@ async function handleGet(req, res) {
         id: row.players.id,
         name: row.players.name,
         sortOrder: row.sort_order,
+        odds: row.odds,
       });
     }
 
