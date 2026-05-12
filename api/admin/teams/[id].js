@@ -23,13 +23,14 @@ export default async function handler(req, res) {
  */
 async function handlePatch(req, res, id) {
   try {
-    const { teamName, submittedBy, tiebreaker, picks } = req.body;
+    const { teamName, submittedBy, tiebreaker, picks, paid } = req.body;
 
     // Update team metadata
     const updates = {};
     if (teamName !== undefined) updates.team_name = teamName;
     if (submittedBy !== undefined) updates.submitted_by = submittedBy;
     if (tiebreaker !== undefined) updates.tiebreaker = parseInt(tiebreaker);
+    if (paid !== undefined) updates.paid = !!paid;
 
     if (Object.keys(updates).length > 0) {
       const { error } = await supabaseAdmin

@@ -576,14 +576,41 @@
   border: 1px solid var(--card-border);
   border-radius: 14px;
   box-shadow: var(--shadow-card);
-  padding: 24px;
+  overflow: hidden;
+}
+.admin-section--closed {
+  box-shadow: none;
+}
+.admin-section__toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 18px 24px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+.admin-section__toggle:hover {
+  background: rgba(0, 103, 71, 0.03);
+}
+.admin-section__chevron {
+  font-size: 14px;
+  color: var(--green-deep);
+  width: 14px;
+  display: inline-block;
 }
 .admin-section__title {
   font-family: 'Playfair Display', serif;
   font-size: 20px;
   font-weight: 700;
   color: var(--green-deep);
-  margin: 0 0 12px;
+  margin: 0;
+}
+.admin-section__body {
+  padding: 0 24px 24px;
 }
 .admin-section__placeholder {
   color: var(--text-muted);
@@ -866,13 +893,38 @@
 }
 .team-mgmt__row {
   display: grid;
-  grid-template-columns: 1.2fr 2fr auto;
+  grid-template-columns: 1.2fr 2fr auto auto;
   gap: 12px;
   align-items: center;
   padding: 12px 14px;
   background: var(--white);
   border: 1px solid var(--card-border);
   border-radius: 8px;
+}
+.team-mgmt__paid {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: 'DM Mono', ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  user-select: none;
+  transition: all 0.15s ease;
+}
+.team-mgmt__paid input {
+  margin: 0;
+  cursor: pointer;
+}
+.team-mgmt__paid--yes {
+  background: rgba(0, 103, 71, 0.08);
+  border-color: var(--green-deep);
+  color: var(--green-deep);
 }
 .team-mgmt__meta {
   display: flex;
@@ -977,6 +1029,9 @@
   }
   .team-mgmt__picks {
     grid-template-columns: repeat(3, 1fr);
+  }
+  .team-mgmt__paid {
+    justify-self: start;
   }
 }
 

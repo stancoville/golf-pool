@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import AdminLogin from '../components/AdminLogin.jsx';
 import TournamentSetup from '../components/TournamentSetup.jsx';
 import TeamManagement from '../components/TeamManagement.jsx';
@@ -46,17 +46,33 @@ export default function AdminPage() {
         </div>
 
         <div className="admin-sections">
-          <section className="admin-section">
-            <h2 className="admin-section__title">Tournament Management</h2>
+          <AdminAccordion title="Tournament Management" defaultOpen={true}>
             <TournamentSetup />
-          </section>
+          </AdminAccordion>
 
-          <section className="admin-section">
-            <h2 className="admin-section__title">Team Management</h2>
+          <AdminAccordion title="Team Management" defaultOpen={true}>
             <TeamManagement />
-          </section>
+          </AdminAccordion>
         </div>
       </main>
     </div>
+  );
+}
+
+function AdminAccordion({ title, defaultOpen = true, children }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <section className={`admin-section ${open ? 'admin-section--open' : 'admin-section--closed'}`}>
+      <button
+        type="button"
+        className="admin-section__toggle"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+      >
+        <span className="admin-section__chevron" aria-hidden="true">{open ? '▾' : '▸'}</span>
+        <h2 className="admin-section__title">{title}</h2>
+      </button>
+      {open && <div className="admin-section__body">{children}</div>}
+    </section>
   );
 }

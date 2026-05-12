@@ -43,7 +43,7 @@ export default function TeamManagement() {
       const [teamsRes, fieldRes] = await Promise.all([
         supabase
           .from('teams')
-          .select('id, team_name, submitted_by, tiebreaker, created_at, team_players(tier, player_id, players(id, name))')
+          .select('id, team_name, submitted_by, tiebreaker, paid, created_at, team_players(tier, player_id, players(id, name))')
           .eq('tournament_id', tournamentId)
           .order('created_at', { ascending: true }),
         supabase
@@ -88,6 +88,20 @@ export default function TeamManagement() {
       });
       setMessage(`Saved "${patch.teamName || team.team_name}".`);
       setEditing(null);
+      await fetchTeamsAndField();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function handleTogglePaid(team) {
+    setError(null);
+    setMessage(null);
+    try {
+      await adminFetch(`/api/admin/teams/${team.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ paid: !team.paid }),
+      });
       await fetchTeamsAndField();
     } catch (err) {
       setError(err.message);
@@ -161,6 +175,7 @@ export default function TeamManagement() {
               team={team}
               onEdit={() => setEditing(team.id)}
               onDelete={() => handleDeleteTeam(team)}
+              onTogglePaid={() => handleTogglePaid(team)}
             />
           )
         ))}
@@ -169,7 +184,7 @@ export default function TeamManagement() {
   );
 }
 
-function TeamRow({ team, onEdit, onDelete }) {
+function TeamRow({ team, onEdit, onDelete, onTogglePaid }) {
   return (
     <div className="team-mgmt__row">
       <div className="team-mgmt__meta">
@@ -188,6 +203,10 @@ function TeamRow({ team, onEdit, onDelete }) {
           </div>
         ))}
       </div>
+      <label className={`team-mgmt__paid ${team.paid ? 'team-mgmt__paid--yes' : ''}`}>
+        <input type="checkbox" checked={!!team.paid} onChange={onTogglePaid} />
+        <span>Paid</span>
+      </label>
       <div className="team-mgmt__actions">
         <button className="tournament-setup__btn tournament-setup__btn--ghost" onClick={onEdit}>Edit</button>
         <button className="tournament-setup__btn tournament-setup__btn--danger" onClick={onDelete}>Delete</button>

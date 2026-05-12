@@ -50,8 +50,12 @@ create table if not exists teams (
   team_name text not null,
   submitted_by text not null,
   tiebreaker integer not null,
+  paid boolean not null default false,
   created_at timestamptz not null default now()
 );
+
+-- Migration for existing deployments: add paid column if it's missing.
+alter table teams add column if not exists paid boolean not null default false;
 
 -- ----- Roster (six players per team) -----
 create table if not exists team_players (
