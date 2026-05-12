@@ -124,8 +124,11 @@ async function handlePost(req, res) {
     if (!tournament.registration_open) {
       return res.status(400).json({ error: 'Registration is closed' });
     }
-    if (new Date(tournament.start_date) <= new Date()) {
-      return res.status(400).json({ error: 'Tournament has already started' });
+    // Registration closes at the earliest tee time: 11:00 UTC (~7am Eastern) of
+    // start_date. Matches the UI cutoff in src/pages/MainPage.jsx.
+    const teeOff = new Date(`${tournament.start_date}T11:00:00Z`);
+    if (teeOff <= new Date()) {
+      return res.status(400).json({ error: 'Registration closed — tournament has started.' });
     }
 
     // Validate all picks are valid tournament_players

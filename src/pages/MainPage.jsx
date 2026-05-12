@@ -56,8 +56,14 @@ export default function MainPage() {
 
   useEffect(() => { checkRegistration(); }, [checkRegistration]);
 
-  // Show registration form when registration is open
-  const showRegistration = regData?.tournament?.registrationOpen === true;
+  // Registration closes at the earliest tee time: 11:00 UTC (~7am Eastern) of
+  // start_date. This auto-flips the homepage to the leaderboard at Thursday
+  // tee-off without anyone having to click Close Registration.
+  const tStart = regData?.tournament?.startDate;
+  const teeOff = tStart ? new Date(`${tStart}T11:00:00Z`).getTime() : null;
+  const tournamentStarted = teeOff != null && Date.now() >= teeOff;
+  const showRegistration =
+    regData?.tournament?.registrationOpen === true && !tournamentStarted;
 
   if (showRegistration) {
     return (
