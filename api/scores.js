@@ -163,17 +163,20 @@ export default async function handler(req, res) {
           }
         }
 
-        if (disp === '-' || (val === 0 && !(period.linescores || []).length)) {
+        const holesPlayed = (period.linescores || []).length;
+        if (disp === '-' || (val === 0 && holesPlayed === 0)) {
           // Round not started or no data
           rounds[r] = null;
-        } else if (val >= 55) {
-          // Completed round (full 18-hole score)
+        } else if (holesPlayed >= 18) {
+          // Completed round — all 18 holes have linescore entries.
+          // Use linescores.length rather than a stroke-count threshold because
+          // an in-progress player with a high score (e.g. 60 strokes through
+          // 16 holes) would otherwise be incorrectly marked complete.
           rounds[r] = Math.round(val);
           lastCompletedRound = r + 1;
         } else {
-          // In-progress round — partial strokes, not a completed score
+          // In-progress round — partial strokes, not a completed score.
           rounds[r] = null;
-          // Still counts as activity for this round
           if (lastCompletedRound < r + 1) lastCompletedRound = r;
         }
       }
