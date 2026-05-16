@@ -181,10 +181,13 @@ export default async function handler(req, res) {
         }
       }
 
-      // Detect cut: if the tournament is past round 2 and the player only has
-      // R1 + R2 completed with no R3 data, they missed the cut.
+      // Detect cut: ESPN omits R3/R4 placeholders for players who missed the
+      // cut. Active players have 4 linescore entries (R1–R4, even if R3/R4 are
+      // empty placeholders awaiting tee-off); cut players have only 2.
+      // Don't rely on rounds[2] === null — that's also true for active players
+      // who haven't teed off in R3 yet.
       let status = 'active';
-      if (currentRound >= 3 && lastCompletedRound === 2 && rounds[2] === null) {
+      if (currentRound >= 3 && ls.length < 3) {
         status = 'cut';
       }
 
